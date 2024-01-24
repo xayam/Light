@@ -1,6 +1,4 @@
 import math
-import pprint
-import random
 from PIL import Image
 import cv2
 import os
@@ -26,70 +24,6 @@ def png2video():
     cv2.destroyAllWindows()
     video.release()
 
-
-def create_png():
-    for y in range(width):
-        for x in range(width):
-            values.append({
-                "x": x,
-                "y": y,
-                "v": random.randrange(width),
-            })
-
-    for t in range(0, 2 * width):
-        img = Image.new(mode="RGB", size=(4 * width, 4 * width), color=(255, 255, 255))
-        # draw = ImageDraw.Draw(img)
-        print(t)
-        for v in range(len(values)):
-            amp = values[v]["x"]
-            phi = 2 * math.pi * values[v]["y"] / 255
-            gz = values[v]["v"] + 1
-            time = t / 255
-            x = amp * math.sin(math.pi * gz * time + phi) / width
-            y = amp * math.cos(math.pi * gz * time + phi) / width
-            x = 2 * x * width + 2 * width - 1
-            y = 2 * y * width + 2 * width - 1
-            g = values[v]["x"]
-            r = values[v]["y"]
-            b = values[v]["v"]
-            img.putpixel((int(x), int(y)), (r, g, b))
-        img.save(f"{image_folder}/time_" + str(t).rjust(5, "0") + ".png",
-                 format="PNG")
-
-
-# create_png()
-# png2video()
-
-def create_png2():
-    for y in range(width):
-        for x in range(width):
-            values.append({
-                "x": x,
-                "y": y,
-                "v": width * int(random.randrange(width) > width * 0.9)
-            })
-
-    img = Image.new(mode="RGB", size=(4 * width, 4 * width), color=(255, 255, 255))
-    for t in range(0, 4 * width):
-        print(t)
-        for v in range(len(values)):
-            amp = values[v]["x"]
-            phi = 2 * math.pi * values[v]["y"] / 255
-            gz = values[v]["v"] + 1
-            time = t / 255
-            x = amp * math.sin(math.pi * gz * time + phi) / width
-            y = amp * math.cos(math.pi * gz * time + phi) / width
-            x = 2 * x * width + 2 * width - 1
-            y = 2 * y * width + 2 * width - 1
-            g = values[v]["x"]
-            r = values[v]["y"]
-            b = values[v]["v"]
-            img.putpixel((int(t), int(y)), (b, b, b))
-    img.save(f"{image_folder}2/time_" + str(4 * width).rjust(5, "0") + ".png",
-             format="PNG")
-
-
-# create_png2()
 
 def compress():
     global values
