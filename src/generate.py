@@ -6,13 +6,13 @@ import os
 
 size = 9
 width = 256
-width2 = width * 2
+width2 = width
 image_folder = 'images'
 video_name = 'video.avi'
 files = [
     # "video1.zip",
     "fb536381.txt",
-    "fb536381.zip",
+    # "fb536381.zip",
 ]
 pp = pprint.PrettyPrinter(width=64)
 
@@ -47,7 +47,6 @@ def decode(file_name):
              for _ in range(width)] for _ in range(width)]
     amps = []
     buf = Image.open(file_name)
-    count = 0
     for y in range(buf.height):
         for x in range(buf.width):
             v = buf.getpixel((x, y))
@@ -58,26 +57,31 @@ def decode(file_name):
 
             amp = (xx ** 2 + yy ** 2) ** 0.5
             # print(xx, yy, amp, yy / amp, sep=":")
-            phi = math.asin(yy / amp)
-
-            k = (phi + math.pi / 2) / math.pi * 255
+            phi = math.asin(xx / amp)
+            # phi = math.pi / 2 * math.sin(phi)
+            # x = amp * math.sin(phi / 255 / (k + 1) + phi)
+            # phi = 2 * math.pi * k / 255 - math.pi
+            k = (phi + math.pi) / math.pi / 2 * 255
+            print(k)
             k = int(str(k).split(".")[0])
             assert k in range(width)
 
-            gz = amp / (2 * 2 ** 0.5)
+            gz = amp * width / width2 / 2 ** 0.5
             gz = int(str(gz).split(".")[0])
             amps.append({"gz": gz, "k": k, "v": v})
-            # assert gz in range(width)
+            assert gz in range(width)
+            # print(gz)
     count = 0
     amps = [{'index': index, 'data': data} for index, data in enumerate(amps)]
-    amps.sort(key=lambda item: (item["data"]["k"], item["data"]["v"], item["data"]["gz"]))
+    amps.sort(key=lambda item: (item["data"]["k"],item["data"]["v"],item["data"]["gz"]))
     print(len(amps), sep=":")
     index = 0
     result = [amps[index]]
     for i in range(1, len(amps)):
-        if amps[i]["data"]["gz"] == amps[index]["data"]["gz"] and \
-                amps[i]["data"]["k"] == amps[index]["data"]["k"] and \
-                amps[i]["data"]["v"] == amps[index]["data"]["v"]:
+
+        if amps[i]["data"]["k"] == amps[index]["data"]["k"] and \
+            amps[i]["data"]["v"] == amps[index]["data"]["v"] and \
+            amps[i]["data"]["gz"] == amps[index]["data"]["gz"]:
             pass
         else:
             result.append(amps[i])
@@ -90,8 +94,8 @@ def decode(file_name):
         res[r["index"]]["v"] = r["data"]["v"]
     for y in range(len(vals)):
         for x in range(len(vals[y])):
-            xx = int(str(x * 2).split(".")[0])
-            yy = int(str(y * 2).split(".")[0])
+            xx = int(str(x * width2 / width).split(".")[0])
+            yy = int(str(y * width2 / width).split(".")[0])
             a = yy * width2 + xx
             # print(yy, xx, res[a]["gz"], sep=":")
             # print(yy, xx, amps[a]["gz"], sep=":")
@@ -148,8 +152,8 @@ def compress(file_name):
         for k in range(len(values[c])):
             for v in range(len(values[c][k])):
                 gz = values[c][k][v]["v"]
-                amp = gz * width2 / width / 2 ** 0.5 + 1
-                phi = 2 * math.pi * k / 255
+                amp = gz * width2 / width # / 2 ** 0.5 + 1
+                phi = 2 * math.pi * k / 255 - math.pi
                 time = 0 / 255
                 x = amp * math.sin(math.pi * time + phi)
                 x = (x - 1) / 2 + width2 / 2
