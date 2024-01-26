@@ -46,62 +46,77 @@ def decode(file_name):
     vals = [[int.to_bytes(32, 1, byteorder="little")
              for _ in range(width)] for _ in range(width)]
     amps = []
+    count = 0
     buf = Image.open(file_name)
     for y in range(buf.height):
         for x in range(buf.width):
-            v = buf.getpixel((x, y))
-            assert v in range(width)
+            d = buf.getpixel((x, y))
+            assert d in range(width)
 
-            yy = 2 * (y - buf.height / 2) + 1
-            xx = 2 * (y - buf.width / 2) + 1
-
+            yy = 2 * (y - buf.height / 2)
+            xx = 2 * (y - buf.width / 2)
             amp = (xx ** 2 + yy ** 2) ** 0.5
             # print(xx, yy, amp, yy / amp, sep=":")
-            phi = math.asin(xx / amp)
-            # phi = math.pi / 2 * math.sin(phi)
-            # x = amp * math.sin(phi / 255 / (k + 1) + phi)
-            # phi = 2 * math.pi * k / 255 - math.pi
-            k = (phi + math.pi) / math.pi / 2 * 255
-            print(k)
+            phi = math.atan2(yy, xx)
+            # phi = 2 * math.pi * k / 255 - math.pi + 2 * math.pi / 255 / 255 * amp
+            # k = (phi + math.pi) / 2 / math.pi * 255
+            phi = d / 127
+            # distance = (k ** 2 + v ** 2) ** 0.5 / 2 ** 0.5 * 2
+            # phi = distance / 127
+            # amp = gz * width2 / width / phi
+            # phi = (phi * amp * 2 - 1) * math.pi
+            phi = (phi * amp * 2 - 1) * math.pi
+            k = 0
+            # k = abs(k)
+            # print(k)
             k = int(str(k).split(".")[0])
-            assert k in range(width)
+            # assert k in range(width)
 
-            gz = amp * width / width2 / 2 ** 0.5
+
+            gz = amp * width / width2
             gz = int(str(gz).split(".")[0])
-            amps.append({"gz": gz, "k": k, "v": v})
-            assert gz in range(width)
-            # print(gz)
-    count = 0
-    amps = [{'index': index, 'data': data} for index, data in enumerate(amps)]
-    amps.sort(key=lambda item: (item["data"]["k"],item["data"]["v"],item["data"]["gz"]))
-    print(len(amps), sep=":")
-    index = 0
-    result = [amps[index]]
-    for i in range(1, len(amps)):
 
-        if amps[i]["data"]["k"] == amps[index]["data"]["k"] and \
-            amps[i]["data"]["v"] == amps[index]["data"]["v"] and \
-            amps[i]["data"]["gz"] == amps[index]["data"]["gz"]:
-            pass
-        else:
-            result.append(amps[i])
-            index = i
-    print(len(result), sep=":")
-    res = [{'gz': 0, 'k': 0, 'v': 0} for _ in range(width2 ** 2)]
-    for r in result:
-        res[r["index"]]["gz"] = r["data"]["gz"]
-        res[r["index"]]["k"] = r["data"]["k"]
-        res[r["index"]]["v"] = r["data"]["v"]
-    for y in range(len(vals)):
-        for x in range(len(vals[y])):
-            xx = int(str(x * width2 / width).split(".")[0])
-            yy = int(str(y * width2 / width).split(".")[0])
-            a = yy * width2 + xx
-            # print(yy, xx, res[a]["gz"], sep=":")
-            # print(yy, xx, amps[a]["gz"], sep=":")
-            gz = int.to_bytes(res[a]["gz"], 1, byteorder="little")
-            vals[res[a]["k"]][res[a]["v"]] = gz
-    print(len(res), sep=":")
+            try:
+                assert gz in range(width)
+                count += 1
+                amps.append({"gz": gz, "x": x, "y": y, "v": 0, "k": 0})
+            except AssertionError:
+                amps.append({"gz": 0, "x": x, "y": y, "k": 0, "v": 0})
+            # print(gz)
+    print(count)
+    # amps = [{'index': index, 'data': data} for index, data in enumerate(amps)]
+    # amps.sort(key=lambda item:
+    #           (item["data"]["gz"], item["data"]["k"], item["data"]["v"]))
+    # print(len(amps), sep=":")
+    # index = 0
+    # result = [amps[index]]
+    # for i in range(1, len(amps)):
+    #     if amps[i]["data"]["k"] == amps[index]["data"]["k"] and \
+    #             amps[i]["data"]["v"] == amps[index]["data"]["v"] and \
+    #             amps[i]["data"]["gz"] == amps[index]["data"]["gz"]:
+    #         pass
+    #     else:
+    #         result.append(amps[i])
+    #         index = i
+    # print(len(result), sep=":")
+    # res = [{'gz': 0, 'k': 0, 'v': 0, 'd': 0} for _ in range(width2 ** 2)]
+    # for r in result:
+    #     res[r["index"]]["gz"] = r["data"]["gz"]
+    #     res[r["index"]]["k"] = r["data"]["k"]
+    #     # res[r["index"]]["d"] = r["data"]["d"]
+    #     res[r["index"]]["v"] = r["data"]["v"]
+    # for y in range(len(vals)):
+    #     for x in range(len(vals[y])):
+    #         xx = int(str(x * width2 / width).split(".")[0])
+    #         yy = int(str(y * width2 / width).split(".")[0])
+    #         a = y * width + x
+    for a in range(len(amps)):
+            x = amps[a]["x"] * width // width2
+            y = amps[a]["y"] * width // width2
+            k = amps[a]["k"]
+            v = amps[a]["v"]
+            gz = int.to_bytes(amps[a]["gz"], 1, byteorder="little")
+            vals[k][v] = gz
     return vals
 
 
@@ -147,21 +162,26 @@ def compress(file_name):
     if not os.path.exists(folder):
         os.mkdir(folder)
     file_name2 = f"{folder}/{file_name}"
+
     for c in range(len(values)):
-        img = Image.new(mode="L", size=(width2, width2), color=0)
+        count = 0
+        img = Image.new(mode="L", size=(width2, width2), color=255)
         for k in range(len(values[c])):
             for v in range(len(values[c][k])):
                 gz = values[c][k][v]["v"]
-                amp = gz * width2 / width # / 2 ** 0.5 + 1
-                phi = 2 * math.pi * k / 255 - math.pi
+                distance = (k ** 2 + v ** 2) ** 0.5 / 2 ** 0.5 * 2
+                phi = distance / 127 + 1
+                amp = gz * width2 / width / phi
+                phi = (phi * amp * 2 - 1) * math.pi
                 time = 0 / 255
-                x = amp * math.sin(math.pi * time + phi)
+                x = amp * math.sin(math.pi * time + phi) # + v
                 x = (x - 1) / 2 + width2 / 2
                 x = int(str(x).split(".")[0])
-                y = amp * math.cos(math.pi * time + phi)
+                y = amp * math.cos(math.pi * time + phi) # + k
                 y = (y - 1) / 2 + width2 / 2
                 y = int(str(y).split(".")[0])
-                img.putpixel((x, y), value=v)
+                img.putpixel((x, y), value=int(distance))
+        print(count)
         output_file = f"{file_name2}.{str(c).rjust(5, '0')}.light.png"
         img.save(output_file, format="PNG")
         break
