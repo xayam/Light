@@ -105,8 +105,16 @@ def decode(file_name):
     buf = Image.open(file_name)
     for y in range(buf.height):
         for x in range(buf.width):
-            pass
+            value = buf.getpixel((x, y))
 
+
+    # wavelength = values[c][i][j]["v"] + 1
+    # k = 2 * pi / wavelength
+    # xx = spacing * j
+    # for t in range(len(r)):
+    #     r[t] = sqrt((xx - x[t]) ** 2 + (yy - y[t]) ** 2)
+    # xi[i, j] = sum(list(map(lambda z: xi0 * sin(k * z), r)))
+    # img.putpixel((i, j), value=int(xi[i, j]))
     return vals
 
 
@@ -129,8 +137,8 @@ def decompress(folder):
 
 if __name__ == "__main__":
     for file in files:
-        compress_folder = compress(file)
-        # decompress_file = decompress(compress_folder)
+        # compress_folder = compress(file)
+        decompress_file = decompress("_" + file + "_")
         break
         # if check(decompress_file, file):
         #     print("Поздравляю, распакованный файл соответствует оригиналу")
