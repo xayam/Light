@@ -1,11 +1,14 @@
 import math
 import os
 from math import sqrt, sin, pi
+
+import matplotlib
 import numpy as np
 from PIL import Image
 from numpy import empty
 import matplotlib.pylab as plt
-from scipy.fft import rfft  # , rfftfreq
+from matplotlib import pyplot as plot
+from scipy.fft import rfft, irfft, rfftfreq
 
 files = [
     # "video1.zip",
@@ -20,8 +23,6 @@ width = int(side)
 spacing = side / width
 c = 299792458
 e0 = 10 ** 7 / 4 / math.pi / c ** 2
-er = width ** 2 / 4
-e = e0 * er
 
 
 def read_values(file_name):
@@ -29,8 +30,8 @@ def read_values(file_name):
     with open(file_name, mode="rb") as f:
         buffer = True
         values1 = [[[]]]
-        y = 0
         x = 0
+        y = 0
         while buffer:
             buffer = f.read(1)
             if buffer:
@@ -38,12 +39,13 @@ def read_values(file_name):
                 values1[-1][-1].append(int(b))
                 y += 1
                 if y == width:
-                    values1[-1].append([])
                     y = 0
                     x += 1
+                    if x != width:
+                        values1[-1].append([])
                 if x == width:
-                    x = 0
                     y = 0
+                    x = 0
                     values1.append([[]])
     return values1
 
@@ -68,9 +70,11 @@ def compress(file_name):
             or (len(vals[-1][-1]) != width):
         appendix = vals[-1]
         values = vals[:-1]
-    plt.imshow(vals[0], origin="lower", extent=[0, side, 0, side])
-    plt.gray()
-    plt.show()
+    # v = np.asarray(vals[0])
+    # v = v.transpose()
+    # plt.imshow(v, origin="lower", extent=[0, side, 0, side])
+    # plt.gray()
+    # plt.show()
     folder = "_" + file_name + "_"
     img = Image.new(mode="L", size=(width, width), color=255)
     for i in range(width):
@@ -97,9 +101,10 @@ def compress(file_name):
                 k = 2 * pi / wavelength
                 xi[i, j] = sum(list(map(lambda z: xi0 * sin(k * z), r)))
                 img.putpixel((i, j), value=int(xi[i, j]))
-        plt.imshow(xi, origin="lower", extent=[0, side, 0, side])
-        plt.gray()
-        plt.show()
+        # plt.imshow(np.asarray(xi).transpose(),
+        #            origin="lower", extent=[0, side, 0, side])
+        # plt.gray()
+        # plt.show()
         output_file = f"{file_name2}.{str(chunk).rjust(5, '0')}.light.png"
         img.save(output_file, format="PNG")
         break
@@ -119,26 +124,51 @@ def decode(file_name):
                 r[t] = sqrt((x - xx[t]) ** 2 + (y - xx[t]) ** 2)
             vals.append(buf.getpixel((x, y)))
     print(len(vals))
-    # rate = width ** 2
-    # n = rate
-    xf = rfft(vals)
-    # yf = rfftfreq(n, 1 / rate)
-    lambdas = np.zeros((len(vals)))
-    amp = max(xf)
-    print("Max amplitude = ", amp)
-    for index in range(len(vals)):
-        lambdas[index] = float(vals[index] / amp ** 2 / e)
-    maxi = np.max(lambdas)
-    mini = np.min(lambdas)
-    lambdas = 255 * (lambdas - mini) / (maxi - mini)
-    result = [[0 for _ in range(width)] for _ in range(width)]
+    rate = len(vals)
+    n = len(vals)
+    yf = rfft(vals)
+    xf = rfftfreq(n, 1 / rate)
+
+    print(len(set(xf[1:width])))
+    i = []
+    xf = xf[1:width + 1]
+    yf = yf[1:width + 1]
+    amp = yf
+    # plot.plot(amp)
+    # plot.show()
+
+    yf = irfft(vals)
+    gz = yf[1: width + 1]
+    # plot.plot(gz)
+    # plot.show()
+
+    maxi = np.max(amp)
+    mini = np.min(amp)
+    amp = 255 * (amp - mini) / (maxi - mini)
+
+    maxi = np.max(gz)
+    mini = np.min(gz)
+    gz = 255 * (gz - mini) / (maxi - mini)
+    print(max(vals))
+    print(min(vals))
+    x = []
+    y = []
+    color = []
     for i in range(width):
         for j in range(width):
-            result[i][j] = int(str(lambdas[j * width + i]).split(".")[0])
-    plt.imshow(result)
-    plt.gray()
-    plt.show()
-    return result
+            x.append(gz[i])
+            y.append(amp[j])
+            color.append(1. / (vals[j * width + i] + 1.))
+    colors = plot.get_cmap()(color)
+    maxi = np.max(x)
+    mini = np.min(x)
+    x = 2 * (np.asarray(x) - mini) / (maxi - mini) - 1
+    maxi = np.max(y)
+    mini = np.min(y)
+    y = 2 * (np.asarray(y) - mini) / (maxi - mini) - 1
+    plot.scatter(x, y, c=colors)
+    plot.show()
+    return vals
 
 
 def decompress(folder):
@@ -153,7 +183,7 @@ def decompress(folder):
         data = decode(folder + "/" + f)
         for x in range(len(data)):
             for y in range(len(data[x])):
-                output.write(int.to_bytes(data[x][y], 1, byteorder="little"))
+                output.write(int.to_bytes(data[y][x], 1, byteorder="little"))
     output.close()
     return output_file
 
@@ -179,6 +209,6 @@ def check(file_name1, file_name2):
 if __name__ == "__main__":
     for file in files:
         compress_folder = compress(file)
-        decompress_file = decompress("_" + file + "_")
+        decompress_file = decompress(compress_folder)
         if check(decompress_file, file):
             print("Поздравляю, распакованный файл соответствует оригиналу")
