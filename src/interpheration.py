@@ -1,5 +1,7 @@
 import math
 import os
+import pprint
+import sys
 from math import sqrt, sin, pi
 
 import matplotlib
@@ -18,35 +20,42 @@ files = [
 
 xi0 = 1.0
 separation = 1.0
-side = 256.0
+side = 256.0  # 4, 16 or 256
 width = int(side)
 spacing = side / width
 c = 299792458
 e0 = 10 ** 7 / 4 / math.pi / c ** 2
+
+assert width in [4, 16, 256]
+
+x = [(i % width) + separation / 2 for i in range(width ** 2)]
+r = [0. for _ in range(width ** 2)]
+for i in range(width):
+    for j in range(width):
+        r[j * width + i] = \
+            sqrt((i - x[j * width + i]) ** 2 + (j - x[j * width + i]) ** 2)
 
 
 def read_values(file_name):
     print(f"Reading file '{file_name}'")
     with open(file_name, mode="rb") as f:
         buffer = True
-        values1 = [[[]]]
-        x = 0
+        values1 = [[]]
         y = 0
+        s = ""
+        L = int(math.log2(width))
         while buffer:
             buffer = f.read(1)
             if buffer:
                 b = int.from_bytes(buffer, "little")
-                values1[-1][-1].append(int(b))
-                y += 1
+                s += f"{b:08b}".rjust(8, "0")
+                if len(s) == width * L:
+                    values1[-1].append([int(s[i: i + L], 2) for i in range(0, len(s), L)])
+                    y += 1
+                    s = ""
                 if y == width:
                     y = 0
-                    x += 1
-                    if x != width:
-                        values1[-1].append([])
-                if x == width:
-                    y = 0
-                    x = 0
-                    values1.append([[]])
+                    values1.append([])
     return values1
 
 
@@ -70,6 +79,8 @@ def compress(file_name):
             or (len(vals[-1][-1]) != width):
         appendix = vals[-1]
         values = vals[:-1]
+    print(vals[0])
+    # sys.exit()
     # v = np.asarray(vals[0])
     # v = v.transpose()
     # plt.imshow(v, origin="lower", extent=[0, side, 0, side])
@@ -80,18 +91,11 @@ def compress(file_name):
     for i in range(width):
         for j in range(width):
             img.putpixel((i, j), value=vals[0][i][j])
-    img.save("64kb_" + file_name + ".png", format="PNG")
+    img.save("__" + file_name + ".png", format="PNG")
     # assert not os.path.exists(folder)
     if not os.path.exists(folder):
         os.mkdir(folder)
     file_name2 = f"{folder}/{file_name}"
-    x = [i for i in range(width)]
-    x = list(map(lambda i: i + separation / 2, x))
-    r = [0. for _ in range(width)]
-    for t in range(len(r)):
-        for i in range(width):
-            for j in range(width):
-                r[t] = sqrt((i - x[t]) ** 2 + (j - x[t]) ** 2)
     for chunk in range(len(values)):
         img = Image.new(mode="L", size=(width, width), color=255)
         xi = empty([width, width], float)
@@ -101,6 +105,7 @@ def compress(file_name):
                 k = 2 * pi / wavelength
                 xi[i, j] = sum(list(map(lambda z: xi0 * sin(k * z), r)))
                 img.putpixel((i, j), value=int(xi[i, j]))
+                print(i * width + j)
         # plt.imshow(np.asarray(xi).transpose(),
         #            origin="lower", extent=[0, side, 0, side])
         # plt.gray()
@@ -113,35 +118,31 @@ def compress(file_name):
 
 
 def decode(file_name):
-    xx = [i for i in range(width)]
-    xx = list(map(lambda i: i + separation / 2, xx))
-    r = [0. for _ in range(width)]
     buf = Image.open(file_name)
     vals = []
     for x in range(buf.height):
         for y in range(buf.width):
-            for t in range(len(r)):
-                r[t] = sqrt((x - xx[t]) ** 2 + (y - xx[t]) ** 2)
             vals.append(buf.getpixel((x, y)))
-    print(len(vals))
+    print(len(set(vals)))
     rate = len(vals)
-    n = len(vals)
+    n = rate
     yf = rfft(vals)
     xf = rfftfreq(n, 1 / rate)
-
-    print(len(set(xf[1:width])))
+    plot.plot(xf, yf)
+    plot.show()
+    # print(len(set(xf)))
+    # print(len(set(yf)))
     i = []
-    xf = xf[1:width + 1]
-    yf = yf[1:width + 1]
+    # xf = xf[1:width + 1]
+    # yf = yf[1:width + 1]
     amp = yf
-    # plot.plot(amp)
-    # plot.show()
 
     yf = irfft(vals)
     gz = yf[1: width + 1]
-    # plot.plot(gz)
-    # plot.show()
-
+    plot.plot(yf)
+    plot.show()
+    return np.asarray(buf)
+    # sys.exit()
     maxi = np.max(amp)
     mini = np.min(amp)
     amp = 255 * (amp - mini) / (maxi - mini)
@@ -184,6 +185,7 @@ def decompress(folder):
         for x in range(len(data)):
             for y in range(len(data[x])):
                 output.write(int.to_bytes(int(data[y][x]), 1, byteorder="little"))
+        break
     output.close()
     return output_file
 
