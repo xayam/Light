@@ -168,7 +168,7 @@ def decode(file_name):
     y = 2 * (np.asarray(y) - mini) / (maxi - mini) - 1
     plot.scatter(x, y, c=colors)
     plot.show()
-    return vals
+    return np.asarray(buf)
 
 
 def decompress(folder):
@@ -183,7 +183,7 @@ def decompress(folder):
         data = decode(folder + "/" + f)
         for x in range(len(data)):
             for y in range(len(data[x])):
-                output.write(int.to_bytes(data[y][x], 1, byteorder="little"))
+                output.write(int.to_bytes(int(data[y][x]), 1, byteorder="little"))
     output.close()
     return output_file
 
@@ -211,4 +211,4 @@ if __name__ == "__main__":
         compress_folder = compress(file)
         decompress_file = decompress(compress_folder)
         if check(decompress_file, file):
-            print("Поздравляю, распакованный файл соответствует оригиналу")
+            print("Check success!!!")
