@@ -86,7 +86,7 @@ def compress(file_name):
     v = np.asarray(vals[0])
     v = v.transpose()
     # plt.imshow(v, origin="lower", extent=[0, side, 0, side])
-    # plt.gray()
+    plt.gray()
     # plt.show()
     plt.imsave(file_name + ".png", v)
     folder = "_" + file_name + "_"
@@ -122,9 +122,95 @@ def compress(file_name):
     return folder
 
 
-def decode_phaze2(img, data):
+def get_intensive(gz, amp, ampt, rotate=True):
+    wl = []
+    # plt.plot(r)
+    # plt.show()
+    for time in range(len(ampt)):
+        for a2 in range(len(gz)):
+            waveLenght = \
+                2 * math.pi / (amp[a2] -
+                               2 * math.pi * r[time])
+            wl.append({"lenght": waveLenght, "time":
+                time, "gz": gz[a2], "amp": int(amp[a2])})
+    wl = [{'index': index,
+           'lenght': data["lenght"],
+           'time': data['time'],
+           "gz": data['gz'], "amp": data['amp']}
+          for index, data in enumerate(wl)]
+    wl.sort(key=lambda item: item["time"])
+    time = wl[0]["time"]
+    lambdas = [[wl[0]]]
+    for w in wl[1:]:
+        if time == w["time"]:
+            lambdas[-1].append(w)
+        else:
+            time = w["time"]
+            lambdas.append([])
+            lambdas[-1].append(w)
+    zz = []
+    # print(lambdas, len(lambdas[0]))
+    x = []
+    for i in range(len(lambdas)):
+        for j in range(len(lambdas[i])):
+            x.append(lambdas[i][j]["lenght"])
+    for L in lambdas:
+        for i in L:
+            x = i["amp"] * math.sin(i["gz"])
+            # if rotate:
+            #     phi = i["gz"] * r[i["time"]]
+            # else:
+            #     phi = i["gz"] / r[i["time"]]
+            phi = i["gz"]
+            y = i["amp"] * math.cos(phi)
+            z = int(str(sqrt(x * x + y * y)).split(".")[0])
+            # if z > 30:
+            zz.append(z)
+    # plt.plot(zz)
+    # plt.show()
+    return zz
 
-    return data
+
+
+def decode_phaze2(img, data):
+    d = []
+    for i in range(img.width):
+        for j in range(img.height):
+            d.append(img.getpixel((i, j)))
+    rate = len(d)
+    n = rate
+    yf = rfft(d)
+    xf = rfftfreq(n, 1 / rate)
+    gz = xf[:]
+    amp = yf[:]
+    plot.plot(gz, amp)
+    plot.show()
+    ampt = irfft(d)[:]
+    plot.plot(ampt)
+    plot.show()
+    intensive = get_intensive(gz, amp, ampt, False)
+    plot.plot(intensive)
+    plot.show()
+
+    s = ""
+    maxi = max(intensive)
+    for i in range(len(intensive)):
+        if intensive[i] > 1 * maxi / 8:
+            s += "1"
+        else:
+            s += "0"
+    print(len(s))
+    x = 0
+    y = 0
+    buf = Image.new(mode="L", size=(width * 2, width * 2))
+    for i in range(0, len(s), 8):
+        buffer = int(s[i: i + 8], 2)
+        buf.putpixel((x, y), value=buffer)
+        x += 1
+        if x == width * 2:
+            x = 0
+            y += 1
+    return buf, data
 
 
 def decode(file_name):
@@ -143,72 +229,53 @@ def decode(file_name):
     xf = rfftfreq(n, 1 / rate)
     gz = xf[:]
     amp = yf[:]
-    # plot.plot(gz, amp)
-    # plot.show()
+
+    reverse = irfft(yf)
+    reverses = []
+    for index, lenght in enumerate(reverse):
+        reverses.append({"index": index, "lenght": lenght + 1})
+
     yf = irfft(vals)
     ampt = np.abs(yf)[:width ** 2]
-    print(len(gz), len(amp), len(ampt), sep=":")
-    # plot.plot(gz, amp)
-    # plot.show()
-    # plot.plot(ampt)
-    # plot.show()
-    wl = []
-    for time in range(len(ampt)):
-        for a2 in range(len(amp)):
-            waveLenght = \
-                2 * math.pi / (gz[a2] -
-                               2 * math.pi * r[time]) + 1
-            wl.append({"lenght": waveLenght, "time":
-                time, "gz": gz[a2], "amp": int(amp[a2])})
-    wl = [{'index': index,
-           'lenght': data["lenght"],
-           'time': data['time'],
-           "gz": data['gz'], "amp": data['amp']}
-          for index, data in enumerate(wl)]
-    wl.sort(key=lambda item: item["time"])
-    print(len(wl))
-    time = wl[0]["time"]
-    lambdas = [[wl[0]]]
-    for w in wl[1:]:
-        if time == w["time"]:
-            lambdas[-1].append(w)
-        else:
-            time = w["time"]
-            lambdas.append([])
-            lambdas[-1].append(w)
-    xx = []
-    yy = []
-    zz = []
-    for L in lambdas:
-        for i in L:
-            x = i["amp"] * math.sin(i["gz"])
-            xx.append(x)
-            y = i["amp"] * math.cos(i["gz"])
-            yy.append(y)
-            zz.append(sqrt(x * x + y * y))
-    # plt.plot(zz)
-    # plt.show()
+    # print(len(gz), len(amp), len(ampt), sep=":")
+    intensive = get_intensive(gz, amp, ampt)
+    plt.plot(intensive)
+    plt.show()
     s = ""
-    for i in range(len(xx)):
-        if zz[i] > 32 / 2:
+    maxi = max(intensive)
+    for i in range(len(intensive)):
+        if intensive[i] > 7 * maxi / 8:
             s += "1"
         else:
             s += "0"
     x = 0
     y = 0
-    img = Image.new(mode="L", size=(32, 129))
-    for i in range(0, len(s), 8):
-        buffer = int(s[i: i + 8], 2)
+    img = Image.new(mode="L", size=(8, 129))
+    for i in range(0, len(s), 32):
+        ss = s[i: i + 32]
+        res = ""
+        for j in range(0, len(ss), 4):
+            buffer = int(ss[j: j + 4], 2)
+            if buffer > 1:
+                res += "1"
+            else:
+                res += "0"
+        buffer = int(res, 2)
+        # print(x, y)
         img.putpixel((x, y), value=buffer)
         x += 1
-        if x == 32:
+        if x == 8:
             x = 0
             y += 1
-    img = img.crop((0, 0, 16, 128 // 4))
+    img = img.crop((0, 0, 8, 8))
     img.save("output.png", format="PNG")
-
-    return decode_phaze2(img, vals)
-
+    buf, data = decode_phaze2(img, vals)
+    buf = buf.crop((0, 0, 8, 8))
+    buf.save("output2.png", format="PNG")
+    # buf, data = decode_phaze2(buf, data, "output3.png")
+    # buf = buf.crop((0, 0, 8, 8))
+    # buf.save("output3.png", format="PNG")
+    return data
     # color = []
     # for i in range(width):
     #     for j in range(width):
