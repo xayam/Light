@@ -37,6 +37,7 @@ for i in range(width):
         r[j * width + i] = \
             sqrt((i - x[j * width + i]) ** 2 + \
                  (j - y[j * width + i]) ** 2)
+        # print(r[j * width + i])
 
 
 def read_values(file_name):
@@ -108,16 +109,16 @@ def compress(file_name):
             for i in range(width):
                 wavelength = values[chunk][i][j] + 1
                 phi = 2 * math.pi / wavelength
-                k = width ** 2
+                k = 1
                 xi[i, j] = sum(list(map(
                     lambda z: xi0 *
-                              sin(2 * math.pi * k * (j * width + i + 1) * z + phi), r)))
+                              sin(2 * math.pi * z + phi), r)))
                 if i % 2 == 0:
                     buffer = int(xi[i, j])
                 else:
                     buffer2 = int(xi[i, j])
                     buffer = (buffer << 4) & buffer2
-                    img.putpixel((i // 2 , j), value=buffer)
+                    img.putpixel((i // 2, j), value=buffer)
                 # print(i * width + j)
         # plt.imshow(np.asarray(xi).transpose(),
         #            origin="lower", extent=[0, side, 0, side])
@@ -130,6 +131,11 @@ def compress(file_name):
     return folder
 
 
+def decode_phaze2(img, data):
+
+    return data
+
+
 def decode(file_name):
     buf = Image.open(file_name)
     vals = []
@@ -140,69 +146,77 @@ def decode(file_name):
             buffer2 = buffer & 15
             vals.append(buffer1)
             vals.append(buffer2)
-            # print(buffer1)
-            # print(buffer2)
-    print(len(set(vals)))
-    # plot.plot(vals)
-    # plot.show()
     rate = len(vals)
     n = rate
     yf = rfft(vals)
     xf = rfftfreq(n, 1 / rate)
-    # plot.plot(xf, yf)
-    # plot.show()
-
     gz = xf[:]
-    amp = np.abs(yf)[:]
-
-    # phi = gz - r[y * width + x]
-    # vals[y * width + x] = int(vals[y * width + x] / math.sin(phi))
-    # # vals[y * width + x] = 2 * math.pi * r[y * width + x] / gz - 1
-    # print(vals[y * width + x])
+    amp = yf[:]
+    # plot.plot(gz, amp)
+    # plot.show()
     yf = irfft(vals)
-
     ampt = np.abs(yf)[:width ** 2]
     print(len(gz), len(amp), len(ampt), sep=":")
-
-    plot.plot(gz, amp)
-    plot.show()
-    plot.plot(ampt)
-    plot.show()
+    # plot.plot(gz, amp)
+    # plot.show()
+    # plot.plot(ampt)
+    # plot.show()
     wl = []
-    index = 0
     for time in range(len(ampt)):
         for a2 in range(len(amp)):
-            if gz[a2] > 0:
-                if amp[a2] > 0:
-                    # print(I, gz[a2], amp[a2], sep=":")
-                    waveLenght = \
-                        2 * math.pi / (gz[a2] -
-                                       2 * math.pi * width ** 2 * (time + 1) * r[time])
-                    # print(waveLenght)
-                    wl.append(waveLenght + 1)
-                    index += 1
-                    break
-    wl = [{'index': index, 'data': data} for index, data in enumerate(wl)]
-    # wl.sort(key=lambda item: item["data"])
-    # print(wl, wl[0], len(wl))
-    lambdas = [0. for _ in range(width ** 2)]
-    for w in wl:
-        # print(w)
-        lambdas[w["index"]] = w["data"]
-    mini = np.min(lambdas)
-    maxi = np.max(lambdas)
-    lambdas = (width - 1) * (np.asarray(lambdas) - mini) / (maxi - mini)
-    for time in range(len(vals)):
-        vals[time] = int(lambdas[time])
-        print(vals[time])
-    print(max(vals))
-    # plt.plot(wl)
+            waveLenght = \
+                2 * math.pi / (gz[a2] -
+                               2 * math.pi * r[time]) + 1
+            wl.append({"lenght": waveLenght, "time":
+                time, "gz": gz[a2], "amp": int(amp[a2])})
+    wl = [{'index': index,
+           'lenght': data["lenght"],
+           'time': data['time'],
+           "gz": data['gz'], "amp": data['amp']}
+          for index, data in enumerate(wl)]
+    wl.sort(key=lambda item: item["time"])
+    print(len(wl))
+    time = wl[0]["time"]
+    lambdas = [[wl[0]]]
+    for w in wl[1:]:
+        if time == w["time"]:
+            lambdas[-1].append(w)
+        else:
+            time = w["time"]
+            lambdas.append([])
+            lambdas[-1].append(w)
+    xx = []
+    yy = []
+    zz = []
+    for L in lambdas:
+        for i in L:
+            x = i["amp"] * math.sin(i["gz"])
+            xx.append(x)
+            y = i["amp"] * math.cos(i["gz"])
+            yy.append(y)
+            zz.append(sqrt(x * x + y * y))
+    # plt.plot(zz)
     # plt.show()
+    s = ""
+    for i in range(len(xx)):
+        if zz[i] > 32 / 2:
+            s += "1"
+        else:
+            s += "0"
+    x = 0
+    y = 0
+    img = Image.new(mode="L", size=(32, 129))
+    for i in range(0, len(s), 8):
+        buffer = int(s[i: i + 8], 2)
+        img.putpixel((x, y), value=buffer)
+        x += 1
+        if x == 32:
+            x = 0
+            y += 1
+    img = img.crop((0, 0, 16, 128 // 4))
+    img.save("output.png", format="PNG")
 
-    # new_sig = irfft(amp)
-    # plt.plot(new_sig)
-    # plt.show()
-    return vals
+    return decode_phaze2(img, vals)
 
     # color = []
     # for i in range(width):
@@ -227,22 +241,14 @@ def decompress(folder):
         data = decode(folder + "/" + f)
         buf = Image.new(mode="L", size=(width, width), color=0)
         buffer1 = 0
-        x = 0
-        y = 0
         for a in range(len(data)):
+            buf.putpixel((a % width, a // width), value=data[a])
             if a % 2 == 0:
                 buffer1 = data[a]
             else:
                 buffer2 = data[a]
                 buffer = (buffer1 << 4) | buffer2
-                # print(x, y, buffer)
-                buf.putpixel((x, y), value=buffer)
                 output.write(int.to_bytes(buffer, 1, byteorder="little"))
-                x += 1
-            if x == width // 2:
-                x = 0
-                y += 1
-
         buf.save(folder + ".png", format="PNG")
         break
     output.close()
