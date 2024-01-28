@@ -21,13 +21,12 @@ files = [
 
 xi0 = 1.0
 separation = 1.0
-side = 16.0  # 4, 16 or 256
+side = 16.0  # only 16
+wavelength = 1.
 width = int(side)
 spacing = side / width
-c = 299792458
-e0 = 10 ** 7 / 4 / math.pi / c ** 2
 
-assert width in [4, 16, 256]
+assert width == 16
 
 x = [(i % width) + separation / 2 for i in range(width ** 2)]
 y = x[:]
@@ -37,7 +36,6 @@ for i in range(width):
         r[j * width + i] = \
             sqrt((i - x[j * width + i]) ** 2 + \
                  (j - y[j * width + i]) ** 2)
-        # print(r[j * width + i])
 
 
 def read_values(file_name):
@@ -88,15 +86,10 @@ def compress(file_name):
     v = np.asarray(vals[0])
     v = v.transpose()
     # plt.imshow(v, origin="lower", extent=[0, side, 0, side])
-    plt.gray()
+    # plt.gray()
     # plt.show()
     plt.imsave(file_name + ".png", v)
     folder = "_" + file_name + "_"
-    # img = Image.new(mode="L", size=(width, width), color=255)
-    # for i in range(width):
-    #     for j in range(width):
-    #         img.putpixel((i, j), value=vals[0][i][j])
-    # img.save("__" + file_name + ".png", format="PNG")
     # assert not os.path.exists(folder)
     if not os.path.exists(folder):
         os.mkdir(folder)
@@ -107,9 +100,7 @@ def compress(file_name):
         buffer = 0
         for j in range(width):
             for i in range(width):
-                wavelength = values[chunk][i][j] + 1
-                phi = 2 * math.pi / wavelength
-                k = 1
+                phi = 2 * math.pi / (values[chunk][i][j] + wavelength)
                 xi[i, j] = sum(list(map(
                     lambda z: xi0 *
                               sin(2 * math.pi * z + phi), r)))
