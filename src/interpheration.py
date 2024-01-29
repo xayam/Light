@@ -14,19 +14,19 @@ from scipy.fft import rfft, irfft, rfftfreq
 
 files = [
     # "video1.zip",
-    "fb536381.txt",
+    # "fb536381.txt",
     # "__fb536381.zip_.7z_.7z",
-    # "fb536381.zip",
+    "fb536381.zip",
 ]
 
 xi0 = 1.0
 separation = 1.0
-side = 16.0  # only 16
+side = 16.0
 wavelength = 1.
 width = int(side)
 spacing = side / width
 
-assert width == 16
+assert width in [4, 16, 256]
 
 x = [(i % width) + separation / 2 for i in range(width ** 2)]
 y = x[:]
@@ -45,19 +45,23 @@ def read_values(file_name):
         values1 = [[]]
         y = 0
         s = ""
-        L = int(math.log2(width))
+        L = 8 // int(math.log2(width))
+        need_count_bytes = width * (width // L)
         while buffer:
             buffer = f.read(1)
             if buffer:
                 b = int.from_bytes(buffer, "little")
                 s += f"{b:08b}".rjust(8, "0")
-                if len(s) == width * L:
-                    values1[-1].append([int(s[i: i + L], 2) for i in range(0, len(s), L)])
+                if len(s) == int(math.log2(width)) * width:
+                    values1[-1].append([int(s[i: i + int(math.log2(width))], 2)
+                                        for i in range(0, len(s), int(math.log2(width)))])
                     y += 1
                     s = ""
                 if y == width:
                     y = 0
                     values1.append([])
+    # print(values1)
+    # sys.exit()
     return values1
 
 
@@ -72,6 +76,18 @@ def add_appendix(file_name, value):
                     f.write(buf)
 
 
+def write_values(file_name, vals):
+    folder = "_" + file_name + "_"
+    if not os.path.exists(folder):
+        os.mkdir(folder)
+    file_name2 = f"{folder}/{file_name}"
+    for chunk in range(len(vals[:-1])):
+        img = Image.new(mode="L", size=(width, width), color=0)
+        for i in range(width):
+            for j in range(width):
+                img.putpixel((i, j), value=vals[chunk][i][j])
+        img.save(file_name2 + f"{str(chunk).rjust(5, '0')}.light.png", format="PNG")
+    add_appendix(file_name2, vals[-1])
 def compress(file_name):
     print(f"Compress file '{file_name}'")
     vals = read_values(file_name)
@@ -81,7 +97,7 @@ def compress(file_name):
             or (len(vals[-1][-1]) != width):
         appendix = vals[-1]
         values = vals[:-1]
-    print(vals[0])
+    # print(vals[0])
     # sys.exit()
     v = np.asarray(vals[0])
     v = v.transpose()
@@ -89,54 +105,59 @@ def compress(file_name):
     plt.gray()
     # plt.show()
     plt.imsave(file_name + ".png", v)
+    # write_values(file_name, vals)
+    # sys.exit()
     folder = "_" + file_name + "_"
     # assert not os.path.exists(folder)
     if not os.path.exists(folder):
         os.mkdir(folder)
     file_name2 = f"{folder}/{file_name}"
     for chunk in range(len(values)):
-        img = Image.new(mode="L", size=(width // 2, width), color=0)
+        img = Image.new(mode="L", size=(width, width), color=0)
         xi = empty([width, width], float)
-        buffer = 0
-        for j in range(width):
-            for i in range(width):
-                phi = 2 * math.pi / (values[chunk][i][j] + wavelength)
-                xi[i, j] = sum(list(map(
-                    lambda z: xi0 *
-                              sin(2 * math.pi * z + phi), r)))
-                if i % 2 == 0:
-                    buffer = int(xi[i, j])
-                else:
-                    buffer2 = int(xi[i, j])
-                    buffer = (buffer << 4) & buffer2
-                    img.putpixel((i // 2, j), value=buffer)
-                # print(i * width + j)
-        # plt.imshow(np.asarray(xi).transpose(),
-        #            origin="lower", extent=[0, side, 0, side])
-        # plt.gray()
-        # plt.show()
-        output_file = f"{folder}/{str(chunk).rjust(5, '0')}.light.png"
-        img.save(output_file, format="PNG")
+        for time in range(1, 2):
+            time_name = str(time).rjust(3, "0")
+            for j in range(width):
+                for i in range(width):
+                    print(j * width + i)
+                    phi = 2 * math.pi / (values[chunk][i][j] + wavelength)
+                    gz = width
+                    xi[i, j] = sum(list(map(
+                        lambda z: xi0 * sin(2 * math.pi * time * z + phi), r)))
+                    # xi[i, j] = (sin(gz * 2 * math.pi / (time + 1) + phi) + 1) * 128
+                    # if i % 2 == 0:
+                    #     buffer = int(xi[i, j])
+                    # else:
+                    # buffer2 = int(xi[i, j])
+                    # buffer = (buffer << 4) & buffer2
+                    img.putpixel((i, j), value=int(xi[i][j]))
+                    # print(i * width + j)
+            # plt.imshow(np.asarray(xi).transpose(),
+            #            origin="lower", extent=[0, side, 0, side])
+            # plt.gray()
+            # plt.show()
+            output_file = \
+                f"{folder}/{str(chunk).rjust(5, '0')}.light.png"
+            img.save(output_file, format="PNG")
         break
     add_appendix(file_name2, appendix)
     return folder
 
 
-def get_intensive(gz, amp, ampt, rotate=True):
+def get_intensive(gz, amp, ampt, data):
     wl = []
-    # plt.plot(r)
+    # plt.plot(amp)
     # plt.show()
     for time in range(len(ampt)):
         for a2 in range(len(gz)):
             waveLenght = \
-                2 * math.pi / (amp[a2] -
-                               2 * math.pi * r[time])
-            wl.append({"lenght": waveLenght, "time":
+                2 * math.pi / (amp[a2] - 2 * math.pi * r[time])
+            wl.append({"lenght": round(float(waveLenght)) + 6, "time":
                 time, "gz": gz[a2], "amp": int(amp[a2])})
     wl = [{'index': index,
            'lenght': data["lenght"],
            'time': data['time'],
-           "gz": data['gz'], "amp": data['amp']}
+           "gz": data['gz'], "amp": data['amp'] + 30}
           for index, data in enumerate(wl)]
     wl.sort(key=lambda item: item["time"])
     time = wl[0]["time"]
@@ -149,27 +170,36 @@ def get_intensive(gz, amp, ampt, rotate=True):
             lambdas.append([])
             lambdas[-1].append(w)
     zz = []
-    # print(lambdas, len(lambdas[0]))
+    print(len(lambdas), len(lambdas[0]))
     x = []
     for i in range(len(lambdas)):
         for j in range(len(lambdas[i])):
-            x.append(lambdas[i][j]["lenght"])
-    for L in lambdas:
-        for i in L:
-            x = i["amp"] * math.sin(i["gz"])
-            # if rotate:
-            #     phi = i["gz"] * r[i["time"]]
-            # else:
-            #     phi = i["gz"] / r[i["time"]]
-            phi = i["gz"]
-            y = i["amp"] * math.cos(phi)
-            z = int(str(sqrt(x * x + y * y)).split(".")[0])
-            # if z > 30:
-            zz.append(z)
-    # plt.plot(zz)
-    # plt.show()
+            # if lambdas[i][j]["amp"] > 0:
+            x.append(lambdas[i][j])
+    x.sort(key=lambda item: item["time"])
+    print(x[0], x[-1])
+    xx = []
+    yy = []
+    c = []
+    for i in x:
+        value = 2 * math.pi * i["index"] * r[i["time"]] / (i["lenght"] + 1)
+        if i["index"] / 129:
+            pass
+        # rr.append(r[i["time"]] * i["index"])
+        a = round(i["time"]) % width + 1
+        b = round(i["time"]) // width + 1
+        c.append(1. / width ** 2 * value)
+        xx.append(value)
+        yy.append(b)
+        # z = sqrt(xx[-1] * xx[-1] + yy[-1] * yy[-1])
+        # z = int(str(float(z)).split(".")[0])
+        # zz.append(z)
+    print(len(xx))
+    colors = plot.get_cmap()(c)
+    # plt.scatter(xx, yy, c=colors)
+    plt.plot(xx)
+    plt.show()
     return zz
-
 
 
 def decode_phaze2(img, data):
@@ -183,14 +213,14 @@ def decode_phaze2(img, data):
     xf = rfftfreq(n, 1 / rate)
     gz = xf[:]
     amp = yf[:]
-    plot.plot(gz, amp)
-    plot.show()
+    # plot.plot(gz, amp)
+    # plot.show()
     ampt = irfft(d)[:]
-    plot.plot(ampt)
-    plot.show()
+    # plot.plot(ampt)
+    # plot.show()
     intensive = get_intensive(gz, amp, ampt, False)
-    plot.plot(intensive)
-    plot.show()
+    # plot.plot(intensive)
+    # plot.show()
 
     s = ""
     maxi = max(intensive)
@@ -199,7 +229,7 @@ def decode_phaze2(img, data):
             s += "1"
         else:
             s += "0"
-    print(len(s))
+    # print(len(s))
     x = 0
     y = 0
     buf = Image.new(mode="L", size=(width * 2, width * 2))
@@ -238,9 +268,9 @@ def decode(file_name):
     yf = irfft(vals)
     ampt = np.abs(yf)[:width ** 2]
     # print(len(gz), len(amp), len(ampt), sep=":")
-    intensive = get_intensive(gz, amp, ampt)
-    plt.plot(intensive)
-    plt.show()
+    intensive = get_intensive(gz, amp, ampt, vals)
+    # plt.plot(intensive)
+    # plt.show()
     s = ""
     maxi = max(intensive)
     for i in range(len(intensive)):
@@ -269,13 +299,13 @@ def decode(file_name):
             y += 1
     img = img.crop((0, 0, 8, 8))
     img.save("output.png", format="PNG")
-    buf, data = decode_phaze2(img, vals)
-    buf = buf.crop((0, 0, 8, 8))
-    buf.save("output2.png", format="PNG")
+    # buf, data = decode_phaze2(img, vals)
+    # buf = buf.crop((0, 0, 8, 8))
+    # buf.save("output2.png", format="PNG")
     # buf, data = decode_phaze2(buf, data, "output3.png")
     # buf = buf.crop((0, 0, 8, 8))
     # buf.save("output3.png", format="PNG")
-    return data
+    return vals
     # color = []
     # for i in range(width):
     #     for j in range(width):
@@ -290,23 +320,22 @@ def decode(file_name):
 def decompress(folder):
     print(f"Decompress folder '{folder}'")
     # assert os.path.exists(folder)
-    lists = [f for f in os.listdir(folder) if f.endswith(".light.png")]
+    chunks = [f for f in os.listdir(folder) if f.endswith(".light.png")]
     output_file = f"uncompress_{folder[1:-1]}"
-    # assert not os.path.exists(output_file)
+    # # assert not os.path.exists(output_file)
     output = open(output_file, mode="wb")
-    for f in lists:
-        print(f)
-        data = decode(folder + "/" + f)
+    for c in chunks:
+        print(c)
+        data = decode(folder + "/" + c)
         buf = Image.new(mode="L", size=(width, width), color=0)
-        buffer1 = 0
         for a in range(len(data)):
             buf.putpixel((a % width, a // width), value=data[a])
-            if a % 2 == 0:
-                buffer1 = data[a]
-            else:
-                buffer2 = data[a]
-                buffer = (buffer1 << 4) | buffer2
-                output.write(int.to_bytes(buffer, 1, byteorder="little"))
+            # if a % 2 == 0:
+            #     buffer1 = data[a]
+            # else:
+            #     buffer2 = data[a]
+            #     buffer = (buffer1 << 4) | buffer2
+            output.write(int.to_bytes(data[a], 1, byteorder="little"))
         buf.save(folder + ".png", format="PNG")
         break
     output.close()
