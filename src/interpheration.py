@@ -38,6 +38,26 @@ for i in range(width):
                  (j - y[j * width + i]) ** 2)
 
 
+def decode2(light, original):
+    image_light = Image.open(light)
+    image_original = Image.open(original)
+    image_result = Image.new(mode="L", size=(width, width), color=0)
+    for j in range(width):
+        for i in range(width):
+            c1 = image_light.getpixel((i, j))
+            c2 = image_original.getpixel((i, j))[0]
+            d = c2 / c1
+            if d > 1.:
+                value = c1 * d
+            elif d != 0.:
+                value = c1 / d
+            else:
+                value = 0
+
+            print(value)
+            value = round(value)
+            image_result.putpixel((i, j), value=value)
+
 def read_values(file_name):
     print(f"Reading file '{file_name}'")
     with open(file_name, mode="rb") as f:
