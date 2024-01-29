@@ -336,12 +336,19 @@ def decompress(folder):
         # decompress2(folder + "/" + c)
         dm = decode_matrix(width)
         buf = Image.new(mode="L", size=(width, width), color=0)
-        for a in range(len(data)):
-            value = data[a] * dm[a]
-            buf.putpixel((a % width, a // width), value=round(value))
-            print(a, dm[a], round(value), sep=":")
-            output.write(int.to_bytes(round(value), 1, byteorder="little"))
+        print(len(data))
+        points = []
+        index = 0
+        for a in range(0, len(data), width):
+            for b in range(width):
+                value = data[a + b] * dm[a + b]
+                index += 1
+                buf.putpixel((a % width, b), value=round(value))
+                print(a, dm[a], round(value), sep=":")
+                points.append(round(value))
+                output.write(int.to_bytes(round(value), 1, byteorder="little"))
         buf.save(folder + ".png", format="PNG")
+        print(max(points), min(points))
         break
     output.close()
     return output_file
