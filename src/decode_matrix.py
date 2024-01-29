@@ -30,7 +30,7 @@ def decode_matrix(width):
         for i in range(width):
             c1 = image_light.getpixel((i, j))
             c2 = image_original.getpixel((i, j))
-            d = (i * width + j) / c1
+            d = 256 - (c1 + 1) / (i + 1)
             if d > 1.:
                 decode_matrix.append(d)
             elif d != 0.:
@@ -40,7 +40,7 @@ def decode_matrix(width):
             a += 1
             value = c1 * decode_matrix[-1]
             # value =
-            result.append(d)
+            result.append(round(d))
             # print(value)
             image_result.putpixel((i, j), value=round(value))
             x.append(c1)

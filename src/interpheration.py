@@ -341,15 +341,15 @@ def decompress(folder):
         index = 0
         for a in range(0, len(data), width):
             for b in range(width):
-                value = data[index] * dm[index]
-                print(data[a], dm[a], value)
+                value = data[dm[b]]
+                print(index, dm[a], value)
                 index += 1
                 buf.putpixel((b, a // width), value=round(value))
                 # print(a, dm[a + b], round(value), sep=":")
                 points.append(round(value))
-                output.write(int.to_bytes(round(value), 1, byteorder="little"))
-        buf.save(folder + ".png", format="PNG")
-        print(max(points), min(points))
+                output.write(int.to_bytes(int(str(value).split(".")[0]), 1, byteorder="little"))
+        # buf.save(folder + ".png", format="PNG")
+        # print(max(points), min(points))
         break
     output.close()
     return output_file
