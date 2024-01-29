@@ -21,7 +21,7 @@ files = [
 
 xi0 = 1.0
 separation = 1.0
-side = 16.0
+side = 256.0
 wavelength = 1.
 width = int(side)
 spacing = side / width
@@ -90,15 +90,15 @@ def compress(file_name):
     print(f"Compress file '{file_name}'")
     vals = read_values(file_name)
     appendix = vals[-1]
-    values = vals[:-1]
+    values = np.asarray(vals[:-1])
     # print(vals[0])
     # sys.exit()
-    v = np.asarray(vals[0])
-    v = v.transpose()
+    # v = np.asarray(vals[0])
     buf = Image.new(mode="L", size=(width, width), color=0)
     for j in range(width):
         for i in range(width):
-            value = v[i, j]
+            value = values[0][i, j]
+            print(value)
             buf.putpixel((i, j), value=int(value))
     buf.save(file_name + ".png", format="PNG")
     # plt.imshow(v, origin="lower", extent=[0, side, 0, side])
@@ -342,7 +342,7 @@ def decompress(folder):
             print(a, dm[a], round(value), sep=":")
             output.write(int.to_bytes(round(value), 1, byteorder="little"))
         buf.save(folder + ".png", format="PNG")
-        # break
+        break
     output.close()
     return output_file
 

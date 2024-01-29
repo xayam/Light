@@ -1,3 +1,5 @@
+import sys
+
 import numpy as np
 from PIL import Image
 from numpy import empty
@@ -15,6 +17,7 @@ def decode_matrix(width):
     x = []
     y = []
     decode_matrix = []
+    result = []
     a = 0
     for j in range(width):
         for i in range(width):
@@ -30,15 +33,18 @@ def decode_matrix(width):
             else:
                 decode_matrix.append(0)
             a += 1
+            value = c1 * decode_matrix[-1]
+            result.append(value)
+            # print(value)
+            image_result.putpixel((i, j), value=round(value))
+            x.append(c1)
+            y.append(c2)
+
+    # image_result.save("image_result.png")
+    x = np.asarray(x)
+    y = np.asarray(y)
+
+    plt.scatter(x, y)
+    plt.show()
+    sys.exit()
     return decode_matrix
-#             print(value)
-#             value = round(value)
-#             image_result.putpixel((i, j), value=value)
-#             x.append(c1)
-#             y.append(c2)
-# image_result.save("image_result.png")
-# x = np.asarray(x)
-# y = np.asarray(y)
-#
-# plt.plot(decode_matrix)
-# plt.show()
