@@ -14,9 +14,9 @@ from scipy.fft import rfft, irfft, rfftfreq
 
 files = [
     # "video1.zip",
-    # "fb536381.txt",
+    "fb536381.txt",
     # "__fb536381.zip_.7z_.7z",
-    "fb536381.zip",
+    # "fb536381.zip",
 ]
 
 xi0 = 1.0
@@ -77,26 +77,20 @@ def add_appendix(file_name, value):
 
 
 def write_values(file_name, vals):
-    folder = "_" + file_name + "_"
-    if not os.path.exists(folder):
-        os.mkdir(folder)
-    file_name2 = f"{folder}/{file_name}"
     for chunk in range(len(vals[:-1])):
         img = Image.new(mode="L", size=(width, width), color=0)
         for i in range(width):
             for j in range(width):
                 img.putpixel((i, j), value=vals[chunk][i][j])
-        img.save(file_name2 + f"{str(chunk).rjust(5, '0')}.light.png", format="PNG")
-    add_appendix(file_name2, vals[-1])
+        img.save(f"images/{file_name}.{str(chunk).rjust(5, '0')}.light.png", format="PNG")
+    add_appendix("images/" + file_name, vals[-1])
+
+
 def compress(file_name):
     print(f"Compress file '{file_name}'")
     vals = read_values(file_name)
-    values = vals[:]
-    appendix = []
-    if (len(vals[-1]) != width + 1) \
-            or (len(vals[-1][-1]) != width):
-        appendix = vals[-1]
-        values = vals[:-1]
+    appendix = vals[-1]
+    values = vals[:-1]
     # print(vals[0])
     # sys.exit()
     v = np.asarray(vals[0])
@@ -112,33 +106,34 @@ def compress(file_name):
     if not os.path.exists(folder):
         os.mkdir(folder)
     file_name2 = f"{folder}/{file_name}"
+    minimum = 256
+    maximum = 0
+    print(len(values))
     for chunk in range(len(values)):
         img = Image.new(mode="L", size=(width, width), color=0)
         xi = empty([width, width], float)
         for time in range(1, 2):
-            time_name = str(time).rjust(3, "0")
-            for j in range(width):
-                for i in range(width):
-                    print(j * width + i)
-                    phi = 2 * math.pi / (values[chunk][i][j] + wavelength)
-                    gz = width
-                    xi[i, j] = sum(list(map(
-                        lambda z: xi0 * sin(2 * math.pi * time * z + phi), r)))
-                    # xi[i, j] = (sin(gz * 2 * math.pi / (time + 1) + phi) + 1) * 128
-                    # if i % 2 == 0:
-                    #     buffer = int(xi[i, j])
-                    # else:
-                    # buffer2 = int(xi[i, j])
-                    # buffer = (buffer << 4) & buffer2
-                    img.putpixel((i, j), value=int(xi[i][j]))
-                    # print(i * width + j)
-            # plt.imshow(np.asarray(xi).transpose(),
-            #            origin="lower", extent=[0, side, 0, side])
-            # plt.gray()
-            # plt.show()
             output_file = \
                 f"{folder}/{str(chunk).rjust(5, '0')}.light.png"
+            if os.path.exists(output_file):
+                continue
+            for j in range(width):
+                print(j)
+                for i in range(width):
+                    phi = 2 * math.pi / (values[chunk][i][j] + wavelength)
+                    # k = j * width + i
+                    xi[i, j] = sum(list(map(
+                        lambda z: sin(2 * math.pi * z + phi), r)))
+                    xi[i, j] = (xi[i, j] / width ** 2 + 1) * 128
+                    if xi[i, j] > maximum:
+                        maximum = xi[i, j]
+                    if xi[i, j] < minimum:
+                        minimum = xi[i, j]
+                    # print(chunk, j, xi[i, j], sep=":")
+                    img.putpixel((i, j), value=int(xi[i][j]))
             img.save(output_file, format="PNG")
+        print(chunk)
+        print(minimum, maximum, sep=":")
         break
     add_appendix(file_name2, appendix)
     return folder
@@ -249,10 +244,7 @@ def decode(file_name):
     for y in range(buf.height):
         for x in range(buf.width):
             buffer = buf.getpixel((x, y))
-            buffer1 = buffer & (15 << 4) >> 4
-            buffer2 = buffer & 15
-            vals.append(buffer1)
-            vals.append(buffer2)
+            vals.append(buffer)
     rate = len(vals)
     n = rate
     yf = rfft(vals)
@@ -260,52 +252,59 @@ def decode(file_name):
     gz = xf[:]
     amp = yf[:]
 
-    reverse = irfft(yf)
-    reverses = []
-    for index, lenght in enumerate(reverse):
-        reverses.append({"index": index, "lenght": lenght + 1})
+    plt.plot(gz, amp)
+    plt.show()
 
-    yf = irfft(vals)
-    ampt = np.abs(yf)[:width ** 2]
+    iamp = irfft(amp)
+    plt.plot(iamp)
+    plt.show()
+
+    ivals = irfft(vals)
+    plt.plot(ivals)
+    plt.show()
+
+    return vals
+    # ampt = np.abs(yf)[:width ** 2]
     # print(len(gz), len(amp), len(ampt), sep=":")
-    intensive = get_intensive(gz, amp, ampt, vals)
-    # plt.plot(intensive)
-    # plt.show()
-    s = ""
-    maxi = max(intensive)
-    for i in range(len(intensive)):
-        if intensive[i] > 7 * maxi / 8:
-            s += "1"
-        else:
-            s += "0"
-    x = 0
-    y = 0
-    img = Image.new(mode="L", size=(8, 129))
-    for i in range(0, len(s), 32):
-        ss = s[i: i + 32]
-        res = ""
-        for j in range(0, len(ss), 4):
-            buffer = int(ss[j: j + 4], 2)
-            if buffer > 1:
-                res += "1"
-            else:
-                res += "0"
-        buffer = int(res, 2)
-        # print(x, y)
-        img.putpixel((x, y), value=buffer)
-        x += 1
-        if x == 8:
-            x = 0
-            y += 1
-    img = img.crop((0, 0, 8, 8))
-    img.save("output.png", format="PNG")
+    # intensive = get_intensive(gz, amp, ampt, vals)
+
+    # s = ""
+    # intensive = []
+    # maxi = max(intensive)
+    # for i in range(len(intensive)):
+    #     if intensive[i] > 7 * maxi / 8:
+    #         s += "1"
+    #     else:
+    #         s += "0"
+    # x = 0
+    # y = 0
+    # img = Image.new(mode="L", size=(8, 129))
+    # for i in range(0, len(s), 32):
+    #     ss = s[i: i + 32]
+    #     res = ""
+    #     for j in range(0, len(ss), 4):
+    #         buffer = int(ss[j: j + 4], 2)
+    #         if buffer > 1:
+    #             res += "1"
+    #         else:
+    #             res += "0"
+    #     buffer = int(res, 2)
+    #     # print(x, y)
+    #     img.putpixel((x, y), value=buffer)
+    #     x += 1
+    #     if x == 8:
+    #         x = 0
+    #         y += 1
+    # img = img.crop((0, 0, 8, 8))
+    # img.save("output.png", format="PNG")
+
     # buf, data = decode_phaze2(img, vals)
     # buf = buf.crop((0, 0, 8, 8))
     # buf.save("output2.png", format="PNG")
     # buf, data = decode_phaze2(buf, data, "output3.png")
     # buf = buf.crop((0, 0, 8, 8))
     # buf.save("output3.png", format="PNG")
-    return vals
+
     # color = []
     # for i in range(width):
     #     for j in range(width):
@@ -321,26 +320,56 @@ def decompress(folder):
     print(f"Decompress folder '{folder}'")
     # assert os.path.exists(folder)
     chunks = [f for f in os.listdir(folder) if f.endswith(".light.png")]
-    output_file = f"uncompress_{folder[1:-1]}"
+    output_file = f"_uncompress_fb536381.txt"
     # # assert not os.path.exists(output_file)
     output = open(output_file, mode="wb")
     for c in chunks:
         print(c)
         data = decode(folder + "/" + c)
+        # decompress2(folder + "/" + c)
         buf = Image.new(mode="L", size=(width, width), color=0)
         for a in range(len(data)):
             buf.putpixel((a % width, a // width), value=data[a])
-            # if a % 2 == 0:
-            #     buffer1 = data[a]
-            # else:
-            #     buffer2 = data[a]
-            #     buffer = (buffer1 << 4) | buffer2
             output.write(int.to_bytes(data[a], 1, byteorder="little"))
         buf.save(folder + ".png", format="PNG")
-        break
+        # break
     output.close()
     return output_file
 
+
+def decompress2(file_name):
+    # vals = read_values("fb536381.txt")
+    # v = np.asarray(vals[0])
+    import matplotlib.cbook as cbook
+    # with cbook.get_sample_data(file_name) as image_file:
+    #     image = plt.imread(image_file)
+    image = Image.open(file_name)
+    colors = []
+    with open(file_name + "_decompress2.txt", mode="wb") as f:
+        for i in range(image.width):
+            for j in range(image.height):
+                c = image.getpixel((j, i))
+                c = (c / 128 - 1) * width ** 2
+
+                colors.append(c)
+                # phi = 2 * math.pi / (values[chunk][i][j] + wavelength)
+                # xi[i, j] = sum(list(map(
+                #     lambda z: sin(2 * math.pi * z + phi), r)))
+                # colors.append(c)
+                # print(c)
+
+                # c = colors[i * image.width + j]
+                # c = math.asin(c)
+                # c = c - 2 * math.pi * r[i * image.width + j]
+                # c = 2 * math.pi / c
+                #
+                # c = colors[i * image.width + j]
+                # c = round(float(c) * 255)
+                # bytes = c.to_bytes(length=1, byteorder="little")
+                # f.write(bytes)
+    # yf = rfft(colors)
+    # plt.plot(colors[: width ** 2 // 4])
+    # plt.show()
 
 def check(file_name1, file_name2):
     print(f"Checking files '{file_name1}' and '{file_name2}'")
@@ -364,5 +393,9 @@ if __name__ == "__main__":
     for file in files:
         compress_folder = compress(file)
         decompress_file = decompress(compress_folder)
-        if check(decompress_file, file):
-            print("Check success!!!")
+        # decompress_file = decompress("D:/Work2/PyCharm/SmartEval2/github/src/light/light/src/_fb536381.txt_")
+        # decompress2("D:/Work2/PyCharm/SmartEval2/github/src/light/light/src/_fb536381.txt.png")
+
+        # if check("fb536381.txt",
+        #          "unc.txt"):
+        #     print("Check success!!!")
