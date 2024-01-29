@@ -3,7 +3,7 @@ import os
 import pprint
 import sys
 from math import sqrt, sin, pi
-
+from decode_matrix import decode_matrix
 import matplotlib
 import numpy as np
 from PIL import Image
@@ -37,26 +37,6 @@ for i in range(width):
             sqrt((i - x[j * width + i]) ** 2 + \
                  (j - y[j * width + i]) ** 2)
 
-
-def decode2(light, original):
-    image_light = Image.open(light)
-    image_original = Image.open(original)
-    image_result = Image.new(mode="L", size=(width, width), color=0)
-    for j in range(width):
-        for i in range(width):
-            c1 = image_light.getpixel((i, j))
-            c2 = image_original.getpixel((i, j))[0]
-            d = c2 / c1
-            if d > 1.:
-                value = c1 * d
-            elif d != 0.:
-                value = c1 / d
-            else:
-                value = 0
-
-            print(value)
-            value = round(value)
-            image_result.putpixel((i, j), value=value)
 
 def read_values(file_name):
     print(f"Reading file '{file_name}'")
@@ -115,10 +95,16 @@ def compress(file_name):
     # sys.exit()
     v = np.asarray(vals[0])
     v = v.transpose()
+    buf = Image.new(mode="L", size=(width, width), color=0)
+    for j in range(width):
+        for i in range(width):
+            value = v[i, j]
+            buf.putpixel((i, j), value=int(value))
+    buf.save(file_name + ".png", format="PNG")
     # plt.imshow(v, origin="lower", extent=[0, side, 0, side])
-    plt.gray()
+    # plt.gray()
     # plt.show()
-    plt.imsave(file_name + ".png", v)
+    # plt.imsave(file_name + ".png", v)
     # write_values(file_name, vals)
     # sys.exit()
     folder = "_" + file_name + "_"
@@ -265,6 +251,7 @@ def decode(file_name):
         for x in range(buf.width):
             buffer = buf.getpixel((x, y))
             vals.append(buffer)
+    return vals
     rate = len(vals)
     n = rate
     yf = rfft(vals)
@@ -347,10 +334,13 @@ def decompress(folder):
         print(c)
         data = decode(folder + "/" + c)
         # decompress2(folder + "/" + c)
+        dm = decode_matrix(width)
         buf = Image.new(mode="L", size=(width, width), color=0)
         for a in range(len(data)):
-            buf.putpixel((a % width, a // width), value=data[a])
-            output.write(int.to_bytes(data[a], 1, byteorder="little"))
+            value = data[a] * dm[a]
+            buf.putpixel((a % width, a // width), value=round(value))
+            print(a, dm[a], round(value), sep=":")
+            output.write(int.to_bytes(round(value), 1, byteorder="little"))
         buf.save(folder + ".png", format="PNG")
         # break
     output.close()
