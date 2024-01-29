@@ -44,7 +44,7 @@ def decode_matrix(width):
     x = np.asarray(x)
     y = np.asarray(y)
 
-    # plt.scatter(x, y)
-    # plt.show()
-    # sys.exit()
+    plt.scatter(x, y)
+    plt.show()
+    sys.exit()
     return decode_matrix
