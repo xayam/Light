@@ -4,7 +4,6 @@ venv/*
 .run/
 __pycache__/
 *.png
-*.light
 *.zip
 *.txt
 *.7z
