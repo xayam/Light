@@ -9,7 +9,7 @@ from config import *
 
 
 def read_values(file_name):
-    print(f"Reading file '{file_name}'")
+    print(f"Reading file '{file_name}...'")
     with open(file_name, mode="rb") as f:
         buffer = True
         values1 = [[]]
@@ -33,7 +33,7 @@ def read_values(file_name):
 
 def add_appendix(file_name, value):
     output_file = f"{file_name}.aaaaa.light"
-    print(f"Added appendix file '{output_file}'")
+    print(f"Added appendix file '{output_file}'...")
     if value:
         with open(output_file, mode="wb") as f:
             for x in range(len(value)):
@@ -53,7 +53,7 @@ def add_appendix(file_name, value):
 
 
 def compress(file_name):
-    print(f"Compress file '{file_name}'")
+    print(f"Compress file '{file_name}'...")
     vals = read_values(file_name)
     values = vals[:-1]
     appendix = vals[-1]
@@ -94,7 +94,7 @@ def compress(file_name):
 
 
 def decompress(folder):
-    print(f"Decompress folder '{folder}'")
+    print(f"Decompress folder '{folder}...'")
     # assert os.path.exists(folder)
     chunks = [f for f in os.listdir(folder) if f.endswith(".png.light")]
     output_file = f"decompress{folder}"
@@ -134,7 +134,7 @@ def decompress(folder):
 
 
 def check(file_name1, file_name2):
-    print(f"Checking files '{file_name1}' and '{file_name2}'")
+    print(f"Checking files '{file_name1}' and '{file_name2}'...")
     fsize1 = os.path.getsize(file_name1)
     fsize2 = os.path.getsize(file_name2)
     if fsize1 != fsize2:
