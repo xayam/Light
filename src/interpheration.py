@@ -125,12 +125,12 @@ def decompress(folder):
         for b in range(width):
             for a in range(width):
                 index = a + b * width
-                value = xf[data[index] * width // 2] / (a + 1)
+                # value = xf[data[index] * width // 2] / (a + 1)
+                value = (index / width) * (index % width) / (b + 1)
                 value = int(str(value).split(".")[0])
-                if index / width == b:
-                    result.append(a)
+                result.append(value)
                     # buf.putpixel((b, a // width), value=round(value))
-                    output.write(int.to_bytes(a, 1, byteorder="little"))
+                output.write(int.to_bytes(value, 1, byteorder="little"))
         plt.plot(result)
         plt.show()
         # buf.save(folder + ".png", format="PNG")
