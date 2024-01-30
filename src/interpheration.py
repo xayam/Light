@@ -111,15 +111,6 @@ def decompress(folder):
             for x in range(buf1.width):
                 buffer = buf1.getpixel((x, y))
                 data.append(buffer)
-        rate = len(data)
-        n = rate
-        yf = np.abs(rfft(data))
-        xf = rfftfreq(n, 1 / rate)
-        # plt.plot(xf[:])
-        # plt.show()
-        # sys.exit()
-
-        dm = decode_matrix(width)
         buf = Image.new(mode="L", size=(width, width), color=0)
         result = []
         for b in range(width):
@@ -135,8 +126,8 @@ def decompress(folder):
                 result.append(value)
                 # buf.putpixel((b, a // width), value=round(value))
                 output.write(int.to_bytes(value, 1, byteorder="little"))
-        plt.plot(result)
-        plt.show()
+        # plt.plot(result)
+        # plt.show()
         # buf.save(folder + ".png", format="PNG")
     print("\n")
     output.close()
