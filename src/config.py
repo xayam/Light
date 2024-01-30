@@ -4,7 +4,6 @@ import sys
 files = [
     # "video1.zip",
     "fb536381.txt",
-    # "__fb536381.zip_.7z_.7z",
     # "fb536381.zip",
 ]
 
