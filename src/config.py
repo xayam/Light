@@ -3,7 +3,8 @@ import sys
 
 files = [
     # "video1.zip",
-    "256.cp",
+    "256.1.cp",
+    "256.2.cp",
     # "fb536381.txt",
     # "fb536381.zip",
 ]

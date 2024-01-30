@@ -111,6 +111,15 @@ def decompress(folder):
             for x in range(buf1.width):
                 buffer = buf1.getpixel((x, y))
                 data.append(buffer)
+        rate = len(data)
+        n = rate
+        yf = rfft(data)
+        xf = rfftfreq(n, 1 / rate)
+        # plt.plot(xf[:], yf[:])
+        # plt.show()
+        # sys.exit()
+
+        dm = decode_matrix(width)
         buf = Image.new(mode="L", size=(width, width), color=0)
         result = []
         for b in range(width):
@@ -123,11 +132,13 @@ def decompress(folder):
                 else:
                     value = ((index + 1) / width) * ((index + 1) % width) / (a + 1)
                 value = int(str(value).split(".")[0])
-                result.append(value)
+                # print(value)
+                # result.append({"value": value})
                 # buf.putpixel((b, a // width), value=round(value))
                 output.write(int.to_bytes(value, 1, byteorder="little"))
         # plt.plot(result)
         # plt.show()
+        # break
         # buf.save(folder + ".png", format="PNG")
     print("\n")
     output.close()
@@ -160,10 +171,16 @@ def check(file_name1, file_name2):
 
 
 if __name__ == "__main__":
+
+    decompress_files = []
+
     for file in files:
         compress_folder = compress(file)
         decompress_file = decompress(compress_folder)
-        if check(file, decompress_file):
+        decompress_files.append([file, decompress_file])
+
+    for file in decompress_files:
+        if check(file[0], file[1]):
             print("\nOk, check success.")
         else:
             print("\nSorry, check files is failed.")

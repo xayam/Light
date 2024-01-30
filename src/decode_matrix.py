@@ -37,7 +37,11 @@ def decode_matrix(width):
 
 
 def codepage(width):
-    with open(f"{width}.cp", mode="wb") as f:
+    with open(f"{width}.1.cp", mode="wb") as f:
         for c in range(width):
             for i in range(width):
+                f.write(c.to_bytes(1, byteorder="little"))
+    with open(f"{width}.2.cp", mode="wb") as f:
+        for i in range(width):
+            for c in range(width):
                 f.write(c.to_bytes(1, byteorder="little"))
