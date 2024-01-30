@@ -122,17 +122,31 @@ def decompress(folder):
         dm = decode_matrix(width)
         buf = Image.new(mode="L", size=(width, width), color=0)
         result = []
+        begin = 0
         for b in range(width):
             for a in range(width):
-                index = a + b * width
+                index1 = a + b * width
+                index2 = a * width + b
                 if b == width - 1 and a == b:
-                    value = 255
+                    value1 = 0
                 elif b > 0 and a == width - 1:
-                    value = (index / width) * (index % width) / width
+                    value1 = (index1 / width) * (index1 % width) / width
                 else:
-                    value = ((index + 1) / width) * ((index + 1) % width) / (a + 1)
-                value = int(str(value).split(".")[0])
-                # print(value)
+                    value1 = ((index1 + 1) / width) * ((index1 + 1) % width) / (a + 1)
+                value1 = int(str(value1).split(".")[0])
+
+                if a == width - 1 and b == width - 1:
+                    value2 = 255
+                elif a > 0 and b == width - 1:
+                    value2 = (index2 / width) * (index2 % width) / width
+                else:
+                    value2 = ((index2 + 1) / width) * ((index2 + 1) % width) / (b + 1)
+
+                value1 = int(str(value1).split(".")[0])
+                value2 = int(str(value2).split(".")[0])
+                value = int(str(value2).split(".")[0])
+
+                print(value1, value2, sep=":")
                 # result.append({"value": value})
                 # buf.putpixel((b, a // width), value=round(value))
                 output.write(int.to_bytes(value, 1, byteorder="little"))
@@ -183,4 +197,4 @@ if __name__ == "__main__":
         if check(file[0], file[1]):
             print("\nOK, check success.")
         else:
-            print("\nSORRY, check files is failed.")
+            raise Exception("\nSORRY, check files is failed.")
