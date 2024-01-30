@@ -58,48 +58,40 @@ def add_appendix(file_name, value):
 def compress(file_name):
     print(f"Compress file '{file_name}'")
     vals = read_values(file_name)
+    values = vals[:-1]
     appendix = vals[-1]
-    values = np.asarray(vals[:-1])
-    buf = Image.new(mode="L", size=(width, width), color=0)
-    for j in range(width):
-        for i in range(width):
-            value = values[0][i, j]
-            buf.putpixel((i, j), value=int(value))
-    buf.save(file_name + ".png", format="PNG")
+    if len(appendix) == width and len(appendix[-1]) == width:
+        values = np.asarray(vals[:])
+        appendix = False
+    # buf = Image.new(mode="L", size=(width, width), color=0)
+    # for j in range(width):
+    #     for i in range(width):
+    #         value = values[0][i, j]
+    #         buf.putpixel((i, j), value=int(value))
+    # buf.save(file_name + ".png", format="PNG")
     folder = "_" + file_name + "_"
     # assert not os.path.exists(folder)
     if not os.path.exists(folder):
         os.mkdir(folder)
     file_name2 = f"{folder}/{file_name}"
-    minimum = 256
-    maximum = 0
-    print(len(values))
     for chunk in range(len(values)):
         img = Image.new(mode="L", size=(width, width), color=0)
         xi = empty([width, width], float)
         for time in range(1, 2):
             output_file = \
-                f"{folder}/{str(chunk).rjust(5, '0')}.light.png"
+                f"{folder}/{str(chunk).rjust(5, '0')}.png.light"
             if os.path.exists(output_file):
                 continue
             for j in range(width):
-                # print(j)
+                print(f"CHUNK={chunk}/{len(values)}:J={j}/{width}")
                 for i in range(width):
                     phi = 2 * math.pi / (values[chunk][i][j] + wavelength)
                     # k = j * width + i
                     xi[i, j] = sum(list(map(
                         lambda z: sin(2 * math.pi * z + phi), r)))
                     xi[i, j] = (xi[i, j] / width ** 2 + 1) * 128
-                    if xi[i, j] > maximum:
-                        maximum = xi[i, j]
-                    if xi[i, j] < minimum:
-                        minimum = xi[i, j]
-                    # print(chunk, j, xi[i, j], sep=":")
                     img.putpixel((i, j), value=int(xi[i][j]))
             img.save(output_file, format="PNG")
-        print(chunk)
-        print(minimum, maximum, sep=":")
-        break
     add_appendix(file_name2, appendix)
     return folder
 
@@ -107,8 +99,8 @@ def compress(file_name):
 def decompress(folder):
     print(f"Decompress folder '{folder}'")
     # assert os.path.exists(folder)
-    chunks = [f for f in os.listdir(folder) if f.endswith(".light.png")]
-    output_file = f"_uncompress_fb536381.txt"
+    chunks = [f for f in os.listdir(folder) if f.endswith(".png.light")]
+    output_file = f"decompress{folder}"
     # # assert not os.path.exists(output_file)
     output = open(output_file, mode="wb")
     for c in chunks:
@@ -146,19 +138,26 @@ def decompress(folder):
 
 def check(file_name1, file_name2):
     print(f"Checking files '{file_name1}' and '{file_name2}'")
+    fsize1 = os.path.getsize(file_name1)
+    fsize2 = os.path.getsize(file_name2)
+    if fsize1 != fsize2:
+        return False
     with open(file_name1, mode="rb") as f1:
         with open(file_name2, mode="rb") as f2:
             b1 = True
             b2 = True
-            count = 1
+            count = 0
             while b1 and b2:
                 b1 = f1.read(1)
-                b2 = f2.read(1)
-                c1 = int.from_bytes(b1, byteorder="little")
-                c2 = int.from_bytes(b2, byteorder="little")
-                print(c1, c2, count, sep=":")
-                count += 1
-                assert c1 == c2
+                if b1:
+                    b2 = f2.read(1)
+                    if b2:
+                        c1 = int.from_bytes(b1, byteorder="little")
+                        c2 = int.from_bytes(b2, byteorder="little")
+                        count += 1
+                        progress(f"{count}/{fsize1}")
+                        if c1 != c2:
+                            return False
     return True
 
 

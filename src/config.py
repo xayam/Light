@@ -1,4 +1,5 @@
 import math
+import sys
 
 files = [
     # "video1.zip",
@@ -8,7 +9,7 @@ files = [
 ]
 
 separation = 1.0
-side = 256.0
+side = 16.0
 wavelength = 1.
 width = int(side)
 spacing = side / width
@@ -23,3 +24,8 @@ for i in range(width):
         r[j * width + i] = \
             math.sqrt((i - x[j * width + i]) ** 2 +
                       (j - y[j * width + i]) ** 2)
+
+
+def progress(message):
+    sys.stdout.write("\r" + message)
+    sys.stdout.flush()
