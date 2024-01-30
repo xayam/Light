@@ -111,6 +111,7 @@ def sort_circles(r1, r0):
         x0 += 1
     return changes
 
+
 def make_moves(data, changes):
     for c in changes:
         b = data[c[0]["y"]][c[0]["x"]]
@@ -118,6 +119,7 @@ def make_moves(data, changes):
             data[c[1]["y"]][c[1]["x"]], data[c[0]["y"]][c[0]["x"]]
         data[c[1]["y"]][c[1]["x"]] = b
     return data
+
 
 if __name__ == "__main__":
     for file in files:
