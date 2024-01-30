@@ -57,9 +57,11 @@ def compress(file_name):
     vals = read_values(file_name)
     values = vals[:-1]
     appendix = vals[-1]
+    print(appendix)
     if len(appendix) == width and len(appendix[-1]) == width:
         values = np.asarray(vals[:])
         appendix = False
+
     # buf = Image.new(mode="L", size=(width, width), color=0)
     # for j in range(width):
     #     for i in range(width):
@@ -80,7 +82,7 @@ def compress(file_name):
             if os.path.exists(output_file):
                 continue
             for j in range(width):
-                progress(f"CHUNK={chunk}/{len(values)}:J={j}/{width}")
+                progress(f"CHUNK={chunk + 1}/{len(values)}:J={j}/{width}")
                 for i in range(width):
                     phi = 2 * math.pi / (values[chunk][i][j] + wavelength)
                     # k = j * width + i
@@ -97,12 +99,12 @@ def decompress(folder):
     print(f"Decompress folder '{folder}...'")
     # assert os.path.exists(folder)
     chunks = [f for f in os.listdir(folder) if f.endswith(".png.light")]
-    output_file = f"decompress{folder}"
+    output_file = f"decompress{folder[:-1]}"
     # # assert not os.path.exists(output_file)
     output = open(output_file, mode="wb")
-    for c in chunks:
-        print(c)
-        buf1 = Image.open(folder + "/" + c)
+    for c in range(len(chunks)):
+        progress(f"CHUNK={c + 1}/{len(chunks)}")
+        buf1 = Image.open(folder + "/" + chunks[c])
         data = []
         for y in range(buf1.height):
             for x in range(buf1.width):
@@ -110,9 +112,6 @@ def decompress(folder):
                 data.append(buffer)
         dm = decode_matrix(width)
         buf = Image.new(mode="L", size=(width, width), color=0)
-        print(len(data))
-        points = []
-
         for b in range(width):
             for a in range(0, len(data), width):
                 index = a + b
@@ -121,15 +120,12 @@ def decompress(folder):
                     value = 32
                 # if round(value) > 255:
                 #     value = 32
-                print(index, a, b, data[index], dm[index], value, sep=":")
+                # print(index, a, b, data[index], dm[index], value, sep=":")
                 buf.putpixel((b, a // width), value=round(value))
-                # print(a, dm[a + b], round(value), sep=":")
-                points.append(round(value))
                 output.write(int.to_bytes(int(str(value).split(".")[0]), 1, byteorder="little"))
         # buf.save(folder + ".png", format="PNG")
-        # print(max(points), min(points))
-        # break
     output.close()
+    print()
     return output_file
 
 
