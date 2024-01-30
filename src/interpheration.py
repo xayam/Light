@@ -116,7 +116,7 @@ def decompress(folder):
             for a in range(0, len(data), width):
                 index = a + b
                 value = data[index] * dm[index]
-                if value > 255:
+                if value > 255: # TODO test failed
                     value = 32
                 # if round(value) > 255:
                 #     value = 32
