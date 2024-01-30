@@ -98,7 +98,7 @@ def compress(file_name):
     for j in range(width):
         for i in range(width):
             value = values[0][i, j]
-            print(value)
+            # print(value)
             buf.putpixel((i, j), value=int(value))
     buf.save(file_name + ".png", format="PNG")
     # plt.imshow(v, origin="lower", extent=[0, side, 0, side])
@@ -124,7 +124,7 @@ def compress(file_name):
             if os.path.exists(output_file):
                 continue
             for j in range(width):
-                print(j)
+                # print(j)
                 for i in range(width):
                     phi = 2 * math.pi / (values[chunk][i][j] + wavelength)
                     # k = j * width + i
@@ -341,8 +341,8 @@ def decompress(folder):
         index = 0
         for a in range(0, len(data), width):
             for b in range(width):
-                value = data[dm[b]]
-                print(index, dm[b], value)
+                value = data[dm[a + b]]
+                print(index, dm[a + b], value, sep=":")
                 index += 1
                 buf.putpixel((b, a // width), value=round(value))
                 # print(a, dm[a + b], round(value), sep=":")

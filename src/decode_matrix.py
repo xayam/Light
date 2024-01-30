@@ -30,7 +30,7 @@ def decode_matrix(width):
         for i in range(width):
             c1 = image_light.getpixel((i, j))
             c2 = image_original.getpixel((i, j))
-            d = (i + 1) / (c1 + 1)
+            d =  (c2 + 1) / (c1 + 1)
             if d > 1.:
                 decode_matrix.append(d)
             elif d != 0.:
@@ -49,10 +49,12 @@ def decode_matrix(width):
     # image_result.save("image_result.png")
     x = np.asarray(x)
     y = np.asarray(y)
-    # result = np.asarray(result)
+    result = np.asarray(result)
+    # result = result / np.max(result) * (255 - 32) + 32
+    print(np.min(result), np.max(result))
     # result = result - (np.max(result) - 255)
-    return result
-    # plt.plot(result)
-    # plt.show()
-    # sys.exit()
+    # return result
+    plt.plot(result)
+    plt.show()
+    sys.exit()
 
