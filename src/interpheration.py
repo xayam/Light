@@ -314,8 +314,8 @@ def decompress(folder):
         index = 0
         for a in range(0, len(data), width):
             for b in range(width):
-                value = data[a + b] * dm[a + b]
-                print(index, data[a + b], dm[a + b], value, sep=":")
+                value = data[a] * dm[a]
+                print(index, data[a], dm[a], value, sep=":")
                 index += 1
                 buf.putpixel((b, a // width), value=round(value))
                 # print(a, dm[a + b], round(value), sep=":")

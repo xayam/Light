@@ -52,8 +52,8 @@ def decode_matrix(width):
     # result = result / np.max(result) * (255 - 32) + 32
     # print(np.min(result), np.max(result))
     # result = result - (np.max(result) - 255)
-    # return result
-    plt.plot(decode_matrix)
-    plt.show()
-    sys.exit()
+    return decode_matrix
+    # plt.plot(decode_matrix)
+    # plt.show()
+    # sys.exit()
 
