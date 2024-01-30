@@ -311,12 +311,14 @@ def decompress(folder):
         buf = Image.new(mode="L", size=(width, width), color=0)
         print(len(data))
         points = []
-        index = 0
+
         for b in range(width):
             for a in range(0, len(data), width):
-                value = data[a] * dm[a]
-                print(index, data[a], dm[a], value, sep=":")
-                index += 1
+                index = a + b
+                value = data[index] * dm[index]
+                if round(value) > 255:
+                    value = 32
+                print(index, data[index], dm[index], value, sep=":")
                 buf.putpixel((b, a // width), value=round(value))
                 # print(a, dm[a + b], round(value), sep=":")
                 points.append(round(value))
