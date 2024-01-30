@@ -126,7 +126,7 @@ def decompress(folder):
             for a in range(width):
                 index = a + b * width
                 if b == width - 1 and a == b:
-                    value = ((index - 1) / width) * ((index - 1) % width) / width
+                    value = 255
                 elif b > 0 and a == width - 1:
                     value = (index / width) * (index % width) / width
                 else:
@@ -173,6 +173,6 @@ if __name__ == "__main__":
         compress_folder = compress(file)
         decompress_file = decompress(compress_folder)
         if check(file, decompress_file):
-            print("Ok, check success.")
+            print("\nOk, check success.")
         else:
-            print("Sorry, check files is failed.")
+            print("\nSorry, check files is failed.")
