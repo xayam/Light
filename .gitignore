@@ -4,4 +4,5 @@ venv
 .run/
 __pycache__/
 *.png
+decompress*.txt
 */test

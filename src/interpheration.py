@@ -116,7 +116,7 @@ def decompress(folder):
             for a in range(0, len(data), width):
                 index = a + b
                 value = data[index] * dm[index]
-                if value > 255: # TODO test failed
+                if value > 255:  # TODO test failed
                     value = 32
                 # print(index, a, b, data[index], dm[index], value, sep=":")
                 buf.putpixel((b, a // width), value=round(value))
