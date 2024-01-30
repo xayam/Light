@@ -80,7 +80,7 @@ def compress(file_name):
             if os.path.exists(output_file):
                 continue
             for j in range(width):
-                print(f"CHUNK={chunk}/{len(values)}:J={j}/{width}")
+                progress(f"CHUNK={chunk}/{len(values)}:J={j}/{width}")
                 for i in range(width):
                     phi = 2 * math.pi / (values[chunk][i][j] + wavelength)
                     # k = j * width + i
