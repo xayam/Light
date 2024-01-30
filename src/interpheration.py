@@ -312,8 +312,8 @@ def decompress(folder):
         print(len(data))
         points = []
         index = 0
-        for a in range(0, len(data), width):
-            for b in range(width):
+        for b in range(width):
+            for a in range(0, len(data), width):
                 value = data[a] * dm[a]
                 print(index, data[a], dm[a], value, sep=":")
                 index += 1

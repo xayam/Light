@@ -1,30 +1,15 @@
 import sys
 import numpy as np
 from PIL import Image
-import matplotlib.pylab as plt
 from matplotlib import pyplot as plot
-from config import *
 
-
-def codepage(width):
-    with open(f"{width}.codepage", mode="wb") as f:
-        for i in range(width):
-            for c in range(256):
-                f.write(c.to_bytes(1, byteorder="little"))
 
 def decode_matrix(width):
-    light = f"{width}light.png"
-    original = f"{width}original.png"
-    # codepage(16)
-    # codepage(256)
+    light = f"{width}.light"
+    original = f"{width}.original"
     image_light = Image.open(light)
     image_original = Image.open(original)
-    image_result = Image.new(mode="L", size=(width, width), color=0)
-    x = []
-    y = []
     decode_matrix = []
-    result = []
-    a = 0
     for j in range(width):
         for i in range(width):
             c1 = image_light.getpixel((i, j))
@@ -36,22 +21,6 @@ def decode_matrix(width):
                 decode_matrix.append(1 / d)
             else:
                 decode_matrix.append(0)
-            a += 1
-            value = c1 * decode_matrix[-1]
-            # value =
-            result.append(round(d))
-            # print(value)
-            image_result.putpixel((i, j), value=round(value))
-            x.append(c1)
-            y.append(c2)
-
-    # image_result.save("image_result.png")
-    x = np.asarray(x)
-    y = np.asarray(y)
-    # result = np.asarray(result)
-    # result = result / np.max(result) * (255 - 32) + 32
-    # print(np.min(result), np.max(result))
-    # result = result - (np.max(result) - 255)
     return decode_matrix
     # plt.plot(decode_matrix)
     # plt.show()
