@@ -36,7 +36,7 @@ def decode_matrix(width):
     return decode_matrix1
 
 
-def codepage(width):
+def codepages(width):
     with open(f"{width}.1.cp", mode="wb") as f:
         for c in range(width):
             for i in range(width):
