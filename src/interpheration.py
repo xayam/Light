@@ -9,7 +9,7 @@ from config import *
 
 
 def read_values(file_name):
-    print(f"Reading file '{file_name}...'")
+    print(f"Reading file '{file_name}'...")
     with open(file_name, mode="rb") as f:
         buffer = True
         values1 = [[]]
@@ -96,7 +96,7 @@ def compress(file_name):
 
 
 def decompress(folder):
-    print(f"Decompress folder '{folder}...'")
+    print(f"Decompress folder '{folder}'...")
     # assert os.path.exists(folder)
     chunks = [f for f in os.listdir(folder) if f.endswith(".png.light")]
     output_file = f"decompress{folder[:-1]}"
@@ -113,13 +113,18 @@ def decompress(folder):
         dm = decode_matrix(width)
         buf = Image.new(mode="L", size=(width, width), color=0)
         for b in range(width):
-            for a in range(0, len(data), width):
-                index = a + b
-                value = data[index] * dm[index]
-                if value > 255:  # TODO test failed
-                    value = 32
-                # print(index, a, b, data[index], dm[index], value, sep=":")
-                buf.putpixel((b, a // width), value=round(value))
+            for a in range(width):
+                index = a + b * width
+                if dm[index] < 1.:
+                    value = data[index] * dm[index]
+                elif dm[index] > 1.:
+                    value = data[index] / dm[index]
+                else:
+                    value = 0
+                value = 255 - value
+                # if value > 255:  # TODO test failed
+                print(index, a, b, data[index], dm[index], value, sep=":")
+                # buf.putpixel((b, a // width), value=round(value))
                 output.write(int.to_bytes(int(str(value).split(".")[0]), 1, byteorder="little"))
         # buf.save(folder + ".png", format="PNG")
     output.close()
