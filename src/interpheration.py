@@ -163,4 +163,6 @@ if __name__ == "__main__":
         compress_folder = compress(file)
         decompress_file = decompress(compress_folder)
         if check(file, decompress_file):
-            print("Check success!!!")
+            print("Ok, check success.")
+        else:
+            print("Sorry, check files is failed.")
