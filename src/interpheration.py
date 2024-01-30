@@ -124,7 +124,6 @@ def decompress(folder):
                 output.write(int.to_bytes(int(str(value).split(".")[0]), 1, byteorder="little"))
         # buf.save(folder + ".png", format="PNG")
     output.close()
-    print()
     return output_file
 
 
