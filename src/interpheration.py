@@ -126,8 +126,8 @@ def decompress(folder):
             for a in range(width):
                 index = a + b * width
                 # value = xf[data[index] * width // 2] / (a + 1)
-                value = (index / width) * (index % width) / (b + 1)
-                value = int(str(value).split(".")[0])
+                value = (index / width) * (index % width) / (a + 1)
+                value = round(value)
                 result.append(value)
                     # buf.putpixel((b, a // width), value=round(value))
                 output.write(int.to_bytes(value, 1, byteorder="little"))
