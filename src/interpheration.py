@@ -57,9 +57,8 @@ def compress(file_name):
     vals = read_values(file_name)
     values = vals[:-1]
     appendix = vals[-1]
-    # print(appendix)
     if len(appendix) == width and len(appendix[-1]) == width:
-        values = np.asarray(vals[:])
+        values = vals[:]
         appendix = False
 
     # buf = Image.new(mode="L", size=(width, width), color=0)
