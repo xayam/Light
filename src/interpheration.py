@@ -15,7 +15,6 @@ def read_values(file_name):
         values1 = [[]]
         y = 0
         s = ""
-        L = 8 // int(math.log2(width))
         while buffer:
             buffer = f.read(1)
             if buffer:
@@ -29,8 +28,6 @@ def read_values(file_name):
                 if y == width:
                     y = 0
                     values1.append([])
-    # print(values1)
-    # sys.exit()
     return values1
 
 
