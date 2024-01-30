@@ -4,6 +4,4 @@ venv
 .run/
 __pycache__/
 *.png
-*.aaaaa.light
-*.png.light
 */test
