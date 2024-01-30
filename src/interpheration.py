@@ -1,41 +1,14 @@
 import math
 import os
-import pprint
-import sys
 from math import sqrt, sin, pi
 from decode_matrix import decode_matrix
-import matplotlib
 import numpy as np
 from PIL import Image
 from numpy import empty
 import matplotlib.pylab as plt
 from matplotlib import pyplot as plot
 from scipy.fft import rfft, irfft, rfftfreq
-
-files = [
-    # "video1.zip",
-    "fb536381.txt",
-    # "__fb536381.zip_.7z_.7z",
-    # "fb536381.zip",
-]
-
-xi0 = 1.0
-separation = 1.0
-side = 256.0
-wavelength = 1.
-width = int(side)
-spacing = side / width
-
-assert width in [4, 16, 256]
-
-x = [(i % width) + separation / 2 for i in range(width ** 2)]
-y = x[:]
-r = [0. for _ in range(width ** 2)]
-for i in range(width):
-    for j in range(width):
-        r[j * width + i] = \
-            sqrt((i - x[j * width + i]) ** 2 + \
-                 (j - y[j * width + i]) ** 2)
+from config import *
 
 
 def read_values(file_name):
@@ -341,8 +314,8 @@ def decompress(folder):
         index = 0
         for a in range(0, len(data), width):
             for b in range(width):
-                value = data[dm[a + b]]
-                print(index, dm[a + b], value, sep=":")
+                value = data[a + b] * dm[a + b]
+                print(index, data[a + b], dm[a + b], value, sep=":")
                 index += 1
                 buf.putpixel((b, a // width), value=round(value))
                 # print(a, dm[a + b], round(value), sep=":")
