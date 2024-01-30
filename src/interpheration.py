@@ -34,12 +34,13 @@ def read_values(file_name):
 def add_appendix(file_name, value):
     output_file = f"{file_name}.aaaaa.light"
     print(f"Added appendix file '{output_file}'...")
-    if value:
-        with open(output_file, mode="wb") as f:
-            for x in range(len(value)):
-                for y in range(len(value[x])):
-                    buf = int.to_bytes(value[x][y], length=1, byteorder="little")
-                    f.write(buf)
+    if not value:
+        return
+    with open(output_file, mode="wb") as f:
+        for x in range(len(value)):
+            for y in range(len(value[x])):
+                buf = int.to_bytes(value[x][y], length=1, byteorder="little")
+                f.write(buf)
 
 
 # def write_values(file_name, vals):
