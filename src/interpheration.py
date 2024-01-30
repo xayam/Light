@@ -4,7 +4,8 @@ from decode_matrix import decode_matrix
 import numpy as np
 from PIL import Image
 from numpy import empty
-from matplotlib import pyplot as plot
+from matplotlib import pyplot as plt
+from scipy.fft import rfft, rfftfreq
 from config import *
 
 
@@ -110,22 +111,28 @@ def decompress(folder):
             for x in range(buf1.width):
                 buffer = buf1.getpixel((x, y))
                 data.append(buffer)
+        rate = len(data)
+        n = rate
+        yf = np.abs(rfft(data))
+        xf = rfftfreq(n, 1 / rate)
+        # plt.plot(xf[:])
+        # plt.show()
+        # sys.exit()
+
         dm = decode_matrix(width)
         buf = Image.new(mode="L", size=(width, width), color=0)
+        result = []
         for b in range(width):
             for a in range(width):
                 index = a + b * width
-                if dm[index] < 1.:
-                    value = data[index] * dm[index]
-                elif dm[index] > 1.:
-                    value = data[index] / dm[index]
-                else:
-                    value = 0
-                value = 255 - value
-                # if value > 255:  # TODO test failed
-                print(index, a, b, data[index], dm[index], value, sep=":")
-                # buf.putpixel((b, a // width), value=round(value))
-                output.write(int.to_bytes(int(str(value).split(".")[0]), 1, byteorder="little"))
+                value = xf[data[index] * width // 2] / (a + 1)
+                value = int(str(value).split(".")[0])
+                if index / width == b:
+                    result.append(a)
+                    # buf.putpixel((b, a // width), value=round(value))
+                    output.write(int.to_bytes(a, 1, byteorder="little"))
+        plt.plot(result)
+        plt.show()
         # buf.save(folder + ".png", format="PNG")
     output.close()
     return output_file
@@ -134,6 +141,7 @@ def decompress(folder):
 def check(file_name1, file_name2):
     print("")
     print(f"Checking files '{file_name1}' and '{file_name2}'...")
+    print("")
     fsize1 = os.path.getsize(file_name1)
     fsize2 = os.path.getsize(file_name2)
     if fsize1 != fsize2:
