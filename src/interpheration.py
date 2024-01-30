@@ -126,6 +126,7 @@ def decompress(folder):
 
 
 def check(file_name1, file_name2):
+    print("")
     print(f"Checking files '{file_name1}' and '{file_name2}'...")
     fsize1 = os.path.getsize(file_name1)
     fsize2 = os.path.getsize(file_name2)
