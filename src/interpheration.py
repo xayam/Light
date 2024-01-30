@@ -125,23 +125,26 @@ def decompress(folder):
         for b in range(width):
             for a in range(width):
                 index = a + b * width
-                # value = xf[data[index] * width // 2] / (a + 1)
-                value = (index / width) * (index % width) / (a + 1)
-                value = round(value)
+                if b == width - 1 and a == b:
+                    value = ((index - 1) / width) * ((index - 1) % width) / width
+                elif b > 0 and a == width - 1:
+                    value = (index / width) * (index % width) / width
+                else:
+                    value = ((index + 1) / width) * ((index + 1) % width) / (a + 1)
+                value = int(str(value).split(".")[0])
                 result.append(value)
-                    # buf.putpixel((b, a // width), value=round(value))
+                # buf.putpixel((b, a // width), value=round(value))
                 output.write(int.to_bytes(value, 1, byteorder="little"))
         plt.plot(result)
         plt.show()
         # buf.save(folder + ".png", format="PNG")
+    print("\n")
     output.close()
     return output_file
 
 
 def check(file_name1, file_name2):
-    print("")
     print(f"Checking files '{file_name1}' and '{file_name2}'...")
-    print("")
     fsize1 = os.path.getsize(file_name1)
     fsize2 = os.path.getsize(file_name2)
     if fsize1 != fsize2:
