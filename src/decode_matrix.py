@@ -5,8 +5,8 @@ from matplotlib import pyplot as plot
 
 
 def decode_matrix(width):
-    light = f"{width}.light"
-    original = f"{width}.original"
+    light = f"{width}.light.cp"
+    original = f"{width}.original.cp"
     image_light = Image.open(light)
     image_original = Image.open(original)
     decode_matrix = []
