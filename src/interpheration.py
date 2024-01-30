@@ -181,6 +181,6 @@ if __name__ == "__main__":
 
     for file in decompress_files:
         if check(file[0], file[1]):
-            print("\nOk, check success.")
+            print("\nOK, check success.")
         else:
-            print("\nSorry, check files is failed.")
+            print("\nSORRY, check files is failed.")
