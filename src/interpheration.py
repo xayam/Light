@@ -121,8 +121,8 @@ def decompress(folder):
 
         dm = decode_matrix(width)
         buf = Image.new(mode="L", size=(width, width), color=0)
-        result = []
-        begin = 0
+        x = []
+        y = []
         for b in range(width):
             for a in range(width):
                 index1 = a + b * width
@@ -145,14 +145,15 @@ def decompress(folder):
                 value1 = int(str(value1).split(".")[0])
                 value2 = int(str(value2).split(".")[0])
                 value = int(str(value2).split(".")[0])
-
+                x.append(data[value1 * width + value2])
+                y.append(value2)
                 print(value1, value2, sep=":")
                 # result.append({"value": value})
                 # buf.putpixel((b, a // width), value=round(value))
                 output.write(int.to_bytes(value, 1, byteorder="little"))
-        # plt.plot(result)
-        # plt.show()
-        # break
+        plt.plot(x[:width])
+        plt.show()
+        break
         # buf.save(folder + ".png", format="PNG")
     print("\n")
     output.close()
