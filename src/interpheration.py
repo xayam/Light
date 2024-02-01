@@ -56,7 +56,7 @@ def add_appendix(file_name, value):
 
 
 def compress(file_name):
-    print(f"Compress file '{file_name}'...")
+    # print(f"Compress file '{file_name}'...")
     file__name = file_name.replace("/", "__")
     vals = read_values(file_name)
     values = vals[:-1]
@@ -249,12 +249,15 @@ if __name__ == "__main__":
         x4 = np.asarray(x4)
         y4 = np.asarray(y4)
         x = x4 - x2
-        y = y4 - x2
-        plt.plot(x, y)
+        y = y4 - y2
+        xx = y / x
+        plt.plot(xx)
         plt.show()
-        print(x)
-        print(y)
-        json_string = json.dumps([x.tolist(), y.tolist()])
+        print(xx)
+        # print(y)
+        # print(y2)
+        # print(y4)
+        json_string = json.dumps([xx.tolist(), xx.tolist()])
         result.append(json_string)
         print("len result json_string =", len(json_string), "bytes")
 

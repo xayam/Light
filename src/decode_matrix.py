@@ -60,8 +60,8 @@ def create_ones(width):
 
 
 def create_two(width):
-    chars = [0, 255]
-    with open(f"two/00{chars[0]}_{chars[1]}.two.cp",
+    chars = [0, 32]
+    with open(f"two/00{chars[0]}_0{chars[1]}.two.cp",
               mode="wb") as f:
         for c in chars:
             for i in range(width ** 2 // 2):
