@@ -2,8 +2,8 @@ from interpheration import compress, decompress, check
 
 
 files = [
-    "256.1.cp",
-    "256.2.cp"
+    "data/256.1.cp",
+    "data/256.2.cp"
 ]
 
 

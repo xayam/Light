@@ -2,18 +2,18 @@ import math
 import sys
 
 files = [
-    # "video1.zip",
-    "256.1.cp",
-    "256.2.cp",
-    # "fb637407.txt",
-    # "fb536381.txt",
-    # "fb536381.zip",
-    # "fb536381_2.zip",
-    # "two/032_192.two.cp",
-    # "two/000_255.two.cp",
-    # "two/000_032.two.cp",
-    # "ones/000.ones.cp",
-    # "ones/255.ones.cp",
+    # "data/video1.zip",
+    "data/256.1.cp",
+    "data/256.2.cp",
+    # "data/fb637407.txt",
+    # "data/fb536381.txt",
+    # "data/fb536381.zip",
+    # "data/fb536381_2.zip",
+    # "data/two/032_192.two.cp",
+    # "data/two/000_255.two.cp",
+    # "data/two/000_032.two.cp",
+    # "data/ones/000.ones.cp",
+    # "data/ones/255.ones.cp",
 ]
 
 separation = 1.0

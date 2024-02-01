@@ -1,5 +1,6 @@
 import json
 import os
+import sys
 from math import sin
 from decode_matrix import decode_matrix
 import numpy as np
@@ -65,6 +66,8 @@ def compress(file_name):
         values = vals[:]
         appendix = False
 
+    print(values[0])
+    sys.exit()
     buf = Image.new(mode="L", size=(width, width), color=0)
     for j in range(width):
         for i in range(width):
@@ -80,20 +83,23 @@ def compress(file_name):
         img = Image.new(mode="L", size=(width, width), color=0)
         xi = empty([width, width], float)
         for time in range(1, 2):
-            output_file = \
-                f"{folder}/{str(chunk).rjust(5, '0')}.png.light"
-            if os.path.exists(output_file):
-                continue
-            for j in range(width):
-                progress(f"CHUNK={chunk + 1}/{len(values)}:J={j + 1}/{width}")
-                for i in range(width):
-                    phi = 2 * math.pi / (values[chunk][i][j] + wavelength)
-                    # k = j * width + i
-                    xi[i, j] = sum(list(map(
-                        lambda z: sin(2 * math.pi * z + phi), r)))
-                    xi[i, j] = (xi[i, j] / width ** 2 + 1) * 128
-                    img.putpixel((i, j), value=int(xi[i][j]))
-            img.save(output_file, format="PNG")
+            for k in range(8):
+                output_file = \
+                    folder + "/" + \
+                    str(chunk).rjust(5, '0') + \
+                    str(k) + ".png.light"
+                if os.path.exists(output_file):
+                    continue
+                for j in range(width):
+                    progress(f"CHUNK={chunk + 1}/{len(values)}:J={j + 1}/{width}")
+                    for i in range(width):
+                        # phi = 2 * math.pi / (values[chunk][i][j] + wavelength)
+                        # k = j * width + i
+                        xi[i, j] = sum(list(map(
+                            lambda rt: sin(2 * math.pi * rt * k), r)))
+                        xi[i, j] = (xi[i, j] / width ** 2 + 1) * 128
+                        img.putpixel((i, j), value=int(xi[i][j]))
+                img.save(output_file, format="PNG")
         break
     print("")
     # add_appendix(file_name2, appendix)
