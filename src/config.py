@@ -4,11 +4,11 @@ import sys
 import numpy as np
 
 files = [
-    "data/video1.zip",
-    "data/256.1.cp",
-    "data/256.2.cp",
+    # "data/video1.zip",
+    # "data/256.1.cp",
+    # "data/256.2.cp",
     # "data/fb637407.txt",
-    # "data/fb536381.txt",
+    "data/fb536381.txt",
     # "data/fb536381.zip",
     # "data/fb536381_2.zip",
     # "data/two/032_192.two.cp",
