@@ -1,8 +1,10 @@
 import math
 import sys
 
+import numpy as np
+
 files = [
-    # "data/video1.zip",
+    "data/video1.zip",
     "data/256.1.cp",
     "data/256.2.cp",
     # "data/fb637407.txt",
@@ -30,8 +32,10 @@ r = [0. for _ in range(width ** 2)]
 for i in range(width):
     for j in range(width):
         r[j * width + i] = \
-            math.sqrt((i - x[j * width + i]) ** 2 +
-                      (j - y[j * width + i]) ** 2)
+            math.sin(2 * math.pi * \
+                     math.sqrt((i - x[j * width + i]) ** 2 +
+                               (j - y[j * width + i]) ** 2))
+r = np.asarray(r)
 
 
 def progress(message):

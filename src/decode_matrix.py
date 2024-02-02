@@ -13,7 +13,6 @@ def decode_matrix(width):
     image_light = Image.open(light)
     image_original = Image.open(original)
     decode_matrix1 = []
-    x = []
     for j in range(width):
         for i in range(width):
             c1 = image_light.getpixel((i, j))

@@ -8,6 +8,7 @@ from PIL import Image
 from numpy import empty
 from matplotlib import pyplot as plt
 from scipy.fft import rfft, rfftfreq
+from line_profiler import LineProfiler
 from config import *
 
 
@@ -24,7 +25,7 @@ def read_values(file_name):
                 b = int.from_bytes(buffer, "little")
                 s += f"{b:08b}".rjust(8, "0")
                 if len(s) == int(math.log2(width)) * width:
-                    values1[-1].append([int(s[i: i + int(math.log2(width))], 2)
+                    values1[-1].append([[int(s[j]) for j in range(i, i + int(math.log2(width)))]
                                         for i in range(0, len(s), int(math.log2(width)))])
                     y += 1
                     s = ""
@@ -35,14 +36,17 @@ def read_values(file_name):
 
 
 def add_appendix(file_name, value):
-    output_file = f"{file_name}.aaaaa.light"
+    output_file = f"{file_name}.a"
     if not value:
         return
     print(f"Added appendix file '{output_file}'...")
     with open(output_file, mode="wb") as f:
-        for x in range(len(value)):
-            for y in range(len(value[x])):
-                buf = int.to_bytes(value[x][y], length=1, byteorder="little")
+        for y in range(len(value)):
+            for x in range(len(value[y])):
+                v = 0
+                for k in range(8):
+                    v += value[y][x][7 - k] * (2 ** k)
+                buf = int.to_bytes(v, length=1, byteorder="little")
                 f.write(buf)
 
 
@@ -56,6 +60,20 @@ def add_appendix(file_name, value):
 #     add_appendix("images/" + file_name, vals[-1])
 
 
+def rsum(value):
+    if value == 0:
+        summa = 0
+    else:
+        summa = np.sum(r)
+    print(summa)
+    return summa
+
+# lp = LineProfiler()
+# lp_wrapper = lp(rsum)
+# lp_wrapper(1)
+# lp.print_stats()
+# sys.exit()
+
 def compress(file_name):
     # print(f"Compress file '{file_name}'...")
     file__name = file_name.replace("/", "__")
@@ -65,44 +83,35 @@ def compress(file_name):
     if len(appendix) == width and len(appendix[-1]) == width:
         values = vals[:]
         appendix = False
-
-    print(values[0])
-    sys.exit()
-    buf = Image.new(mode="L", size=(width, width), color=0)
-    for j in range(width):
-        for i in range(width):
-            value = values[0][i][j]
-            buf.putpixel((i, j), value=int(value))
-    buf.save(file__name + ".png", format="PNG")
+    # print(values[0])
+    # sys.exit()
+    # buf = Image.new(mode="1", size=(width, width), color=0)
+    # for j in range(width):
+    #     for i in range(width):
+    #         value = values[0][i][j][0]
+    #         buf.putpixel((i, j), value=int(value))
+    # buf.save(file__name + ".png", format="PNG")
     folder = "_" + file__name + "_"
     # assert not os.path.exists(folder)
     if not os.path.exists(folder):
         os.mkdir(folder)
-    # file_name2 = f"{folder}/{file_name}"
     for chunk in range(len(values)):
-        img = Image.new(mode="L", size=(width, width), color=0)
-        xi = empty([width, width], float)
+        img = Image.new(mode="1", size=(width, 8 * width), color=0)
+        xi = [[0 for _ in range(8 * width)] for _ in range(width)]
+        output_file = \
+            folder + "/" + \
+            str(chunk).rjust(5, '0')
         for time in range(1, 2):
-            for k in range(8):
-                output_file = \
-                    folder + "/" + \
-                    str(chunk).rjust(5, '0') + \
-                    str(k) + ".png.light"
-                if os.path.exists(output_file):
-                    continue
-                for j in range(width):
-                    progress(f"CHUNK={chunk + 1}/{len(values)}:J={j + 1}/{width}")
-                    for i in range(width):
-                        # phi = 2 * math.pi / (values[chunk][i][j] + wavelength)
-                        # k = j * width + i
-                        xi[i, j] = sum(list(map(
-                            lambda rt: sin(2 * math.pi * rt * k), r)))
-                        xi[i, j] = (xi[i, j] / width ** 2 + 1) * 128
-                        img.putpixel((i, j), value=int(xi[i][j]))
-                img.save(output_file, format="PNG")
-        break
+            for j in range(8 * width):
+                progress(f"CHUNK={chunk + 1}/{len(values)}:J={j + 1}/{8 * width}")
+                for i in range(width):
+                        xi[i][j] = values[chunk][i][j // 8][j % 8]
+                        # print(i, j, k)
+                        img.putpixel((i, j), value=xi[i][j])
+        for k in range(8):
+            img.crop((0, 255 * k, 255, 255 * (k + 1))).save(f"{output_file}.{k}.png", format="PNG")
     print("")
-    # add_appendix(file_name2, appendix)
+    add_appendix(folder + "/" + file__name, appendix)
     return folder
 
 
@@ -123,7 +132,7 @@ def get_data(file_name):
 def decompress(folder):
     print(f"Decompress folder '{folder}'...")
     # assert os.path.exists(folder)
-    chunks = [f for f in os.listdir(folder) if f.endswith(".png.light")]
+    chunks = [f for f in os.listdir(folder) if f.endswith(".png")]
     output_file = f"decompress{folder[:-1]}"
     # # assert not os.path.exists(output_file)
     output = open(output_file, mode="wb")
@@ -213,8 +222,8 @@ if __name__ == "__main__":
 
     for file in files:
         compress_folder = compress(file)
-        decompress_file = decompress(compress_folder)
-        decompress_files.append([file, decompress_file])
+        # decompress_file = decompress(compress_folder)
+        # decompress_files.append([file, decompress_file])
 
     for file in decompress_files:
         output_file = file[1][0] + ".json"

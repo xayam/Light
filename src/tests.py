@@ -1,5 +1,3 @@
-import json
-
 from interpheration import compress, decompress, check
 
 
@@ -19,7 +17,7 @@ if __name__ == "__main__":
         decompress_files.append([file, decompress_file])
 
     if not check(decompress_files[0][0], decompress_files[0][1]) or \
-          not check(decompress_files[1][0], decompress_files[1][1]):
+            not check(decompress_files[1][0], decompress_files[1][1]):
         raise Exception("\nSORRY, codepages check files is failed.")
 
     print("TRUE tests complete!!!")
