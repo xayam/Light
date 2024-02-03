@@ -9,6 +9,7 @@ from numpy import empty
 from matplotlib import pyplot as plt
 from scipy.fft import rfft, rfftfreq
 from line_profiler import LineProfiler
+import wave
 from config import *
 
 
@@ -25,13 +26,16 @@ def read_values(file_name):
                 b = int.from_bytes(buffer, "little")
                 s += f"{b:08b}".rjust(8, "0")
                 if len(s) == int(math.log2(width)) * width:
-                    values1[-1].append([[int(s[j]) for j in range(i, i + int(math.log2(width)))]
+                    values1[-1].append([int(s[i: i + int(math.log2(width))], 2)
                                         for i in range(0, len(s), int(math.log2(width)))])
                     y += 1
                     s = ""
                 if y == width:
                     y = 0
                     values1.append([])
+    if not values1[-1]:
+        values1 = values1[:-1]
+    values1[-1].append([int(s[i: i + 8], 2) for i in range(0, len(s), 8)])
     return values1
 
 
@@ -40,13 +44,11 @@ def add_appendix(file_name, value):
     if not value:
         return
     print(f"Added appendix file '{output_file}'...")
+    # print(value)
     with open(output_file, mode="wb") as f:
         for y in range(len(value)):
             for x in range(len(value[y])):
-                v = 0
-                for k in range(8):
-                    v += value[y][x][7 - k] * (2 ** k)
-                buf = int.to_bytes(v, length=1, byteorder="little")
+                buf = int.to_bytes(value[y][x], length=1, byteorder="little")
                 f.write(buf)
 
 
@@ -85,10 +87,10 @@ def compress(file_name):
         appendix = False
     # print(values[0])
     # sys.exit()
-    # buf = Image.new(mode="1", size=(width, width), color=0)
+    # buf = Image.new(mode="L", size=(width, width), color=0)
     # for j in range(width):
     #     for i in range(width):
-    #         value = values[0][i][j][0]
+    #         value = values[0][i][j]
     #         buf.putpixel((i, j), value=int(value))
     # buf.save(file__name + ".png", format="PNG")
     folder = "_" + file__name + "_"
@@ -96,20 +98,27 @@ def compress(file_name):
     if not os.path.exists(folder):
         os.mkdir(folder)
     for chunk in range(len(values)):
-        img = Image.new(mode="1", size=(width, 8 * width), color=0)
-        xi = [[0 for _ in range(8 * width)] for _ in range(width)]
+        # img = Image.new(mode="L", size=(width, width), color=0)
+        xi = [[0 for _ in range(width)] for _ in range(width)]
         output_file = \
             folder + "/" + \
-            str(chunk).rjust(5, '0')
+            str(chunk).rjust(5, '0') + ".raw"
+        output = open(output_file, mode="wb")
         for time in range(1, 2):
-            for j in range(8 * width):
-                progress(f"CHUNK={chunk + 1}/{len(values)}:J={j + 1}/{8 * width}")
+            for j in range(width):
+                progress(f"CHUNK={chunk + 1}/{len(values)}:J={j + 1}/{width}")
                 for i in range(width):
-                        xi[i][j] = values[chunk][i][j // 8][j % 8]
-                        # print(i, j, k)
-                        img.putpixel((i, j), value=xi[i][j])
-        for k in range(8):
-            img.crop((0, 255 * k, 255, 255 * (k + 1))).save(f"{output_file}.{k}.png", format="PNG")
+                        xi[i][j] = values[chunk][i][j]
+                        output.write(xi[i][j].to_bytes(1, byteorder="little"))
+                        # img.putpixel((i, j), value=xi[i][j])
+        output.close()
+        with open(output_file, "rb") as inp_f:
+            data = inp_f.read()
+            with wave.open(output_file[:-4] + ".wav", "wb") as out_f:
+                out_f.setnchannels(1)
+                out_f.setsampwidth(2)  # number of bytes
+                out_f.setframerate(256 ** 2)
+                out_f.writeframesraw(data)
     print("")
     add_appendix(folder + "/" + file__name, appendix)
     return folder
