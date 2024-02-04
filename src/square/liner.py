@@ -25,42 +25,20 @@ def create_random(width):
 
 
 def create_raw(file_name):
-    if os.path.exists(file_name + ".raw"):
-        return 1
+    moves = []
     with open(file_name, mode="rb") as finput:
-        with open(file_name + ".raw", mode="wb") as foutput:
-            buf = True
-            count = 0
-            while buf:
-                buf = finput.read(1)
-                if buf:
-                    foutput.write(buf)
-                count += 1
-                if count == 256 ** 2:
-                    break
+        buf = True
+        count = 0
+        while buf:
+            buf = finput.read(1)
+            if buf:
+                moves.append(int.from_bytes(buf, "little"))
+            count += 1
+            if count == 256 ** 2:
+                break
+    return moves
 
-
-def encode(file_name, num=0):
-    if num <= 0:
-        raw = []
-        with open(file_name, mode="rb") as f:
-            while True:
-                buf = f.read(1)
-                if buf:
-                    code = int.from_bytes(buf, "little")
-                    raw.append(code)
-                else:
-                    break
-        json_string = json.dumps(raw)
-        with open(f"{file_name}.0.json", mode="w") as f:
-            f.write(json_string)
-    elif os.path.exists(f"{file_name}.{num}.json"):
-        with open(f"{file_name}.{num}.json", mode="r") as f:
-            raw = json.load(f)
-    else:
-        raise Exception(f"ERROR. File not exists '{file_name}.{num - 1}.json'")
-    # plt.plot(raw)
-    # plt.show()
+def encode(raw):
     moves = []
     pos = 0
     count = 0
@@ -79,14 +57,7 @@ def encode(file_name, num=0):
     print("")
     print(len(moves), min(moves), max(moves), sep=":")
     print(len(raw), min(raw), max(raw), sep=":")
-
-    json_string = json.dumps(moves)
-    with open(f"{file_name}.{num + 1}.json", mode="w") as f:
-        f.write(json_string)
-    plt.plot(moves)
-    plt.show()
     return moves
-
 
 # def create_wav(file_name):
 #     create_raw(file_name)
