@@ -15,14 +15,15 @@ else:
     result = []
     count = 0
     moves = create_raw(file_name)
+    first = moves[:]
     while True:
-        raw = moves[:]
-        how, moves = encode(moves)
+        how, moves, raw = encode(moves)
         # plt.plot(raw)
         # plt.show()
         count += 1
         print(count)
         result.append([how, moves, raw])
+        # break
         if max(moves) == 1 and max(raw) == 1:
             break
     json_string = json.dumps(result)

@@ -46,24 +46,21 @@ def encode(raw):
     how = []
     for char in range(max(raw) + 1):
         progress(f"{char + 1}/{max(raw) + 1}")
-        c = 0
         while char in raw[pos:]:
-            curr = pos + count
+            # curr = pos + count
             count = 0
-            while curr + count < len(raw):
-                if raw[curr + count] == char:
+            while pos + count < len(raw):
+                if raw[pos + count] == char:
                     break
                 count += 1
-            # raw = raw[:pos] + raw[pos + count:] + raw[pos:pos + count]
+            raw = raw[:pos] + raw[pos + count:] + raw[pos:pos + count]
             pos += 1
-            c += 1
             moves.append(count)
-        if c != 0:
-            how.append([char, c])
+        how.append([char, pos])
     print("")
     print(len(moves), min(moves), max(moves), sep=":")
     print(len(raw), min(raw), max(raw), sep=":")
-    return how, moves
+    return how, moves, raw
 
 
 def decode(result):
