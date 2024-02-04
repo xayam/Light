@@ -38,12 +38,15 @@ def create_raw(file_name):
                 break
     return moves
 
+
 def encode(raw):
     moves = []
     pos = 0
     count = 0
-    for char in range(len(raw)):
-        progress(f"{char + 1}/{len(raw)}")
+    how = []
+    for char in range(max(raw) + 1):
+        progress(f"{char + 1}/{max(raw) + 1}")
+        c = 0
         while char in raw[pos:]:
             curr = pos + count
             count = 0
@@ -53,11 +56,21 @@ def encode(raw):
                 count += 1
             # raw = raw[:pos] + raw[pos + count:] + raw[pos:pos + count]
             pos += 1
+            c += 1
             moves.append(count)
+        if c != 0:
+            how.append([char, c])
     print("")
     print(len(moves), min(moves), max(moves), sep=":")
     print(len(raw), min(raw), max(raw), sep=":")
-    return moves
+    return how, moves
+
+
+def decode(result):
+    counts = result[0][0]
+    moves = result[0][1]
+    raw = result[0][2]
+    print(moves)
 
 # def create_wav(file_name):
 #     create_raw(file_name)
